@@ -1,0 +1,31 @@
+kind = "web"
+previewPath = "/"
+title = "Nyumba Magazine"
+version = "1.0.0"
+id = "artifacts/nyumba"
+router = "path"
+
+[[integratedSkills]]
+name = "react-vite"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 18977
+
+[services.development]
+run = "pnpm --filter @workspace/nyumba run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/nyumba", "run", "build" ]
+publicDir = "artifacts/nyumba/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "18977"
+BASE_PATH = "/"

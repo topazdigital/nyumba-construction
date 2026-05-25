@@ -1,45 +1,55 @@
-# [Project name]
+# Nyumba Magazine
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Kenya's premier construction industry magazine and property hub — connecting architects, engineers, contractors, and property buyers across Kenya.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/api-server run dev` — run the API server
+- `pnpm --filter @workspace/nyumba run dev` — run the frontend
 - `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
 - `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Required env: `DATABASE_URL` — Postgres connection string (auto-provisioned)
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
+- Frontend: React 18 + Vite + Tailwind CSS v3 + react-router-dom
 - API: Express 5
 - DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Auth: JWT tokens stored in localStorage, bcrypt password hashing
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/nyumba/src/` — React frontend
+  - `pages/` — all page components (Home, News, Properties, Professionals, etc.)
+  - `components/` — Layout, Auth, Home sub-components
+  - `contexts/AuthContext.tsx` — JWT auth context
+- `artifacts/api-server/src/routes/` — API routes (auth.ts, health.ts)
+- `lib/db/src/schema/users.ts` — users table schema (Drizzle)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Frontend uses react-router-dom with `basename` from `import.meta.env.BASE_URL` for Replit proxy routing
+- Auth calls go to `/api/auth/*` (relative URLs routed through Replit's shared proxy to api-server)
+- Tailwind v3 used (original Bolt project) — configured via postcss in vite.config.ts
+- Frontend content (properties, professionals, articles) is static/mock data in the components themselves
+- JWT_SECRET should be set as a Replit secret in production
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
-
-## User preferences
-
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Home page: Featured articles, trending stories, magazine hero
+- Real Estate: Property listings with search/filter, property detail pages
+- Professionals: Directory of architects, structural engineers, contractors
+- Materials & Suppliers: Construction materials marketplace
+- News/Features/Projects/Events: Magazine content sections
+- Flip Copy: Digital magazine reader
+- Auth: Sign in / Register
+- Admin: Dashboard for site management
+- Submit Listing: Property/professional listing submission
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- Default admin credentials: admin@nyumba.co.ke / admin123
+- The API backend uses PostgreSQL; the Replit DB must be provisioned
+- Run `pnpm --filter @workspace/db run push` after schema changes
+- Tailwind v3 (not v4) — do NOT use `@tailwindcss/vite` plugin
