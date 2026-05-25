@@ -395,6 +395,24 @@ INSERT INTO `homepage_slider` (`title`, `description`, `file_type`, `file_path`,
 ('Modern Architecture Trends', 'Latest architectural trends and innovations in Kenya', 'image', 'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=800', 'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=800', 1, 2),
 ('Nyumba Magazine Issue 12', 'Read the latest digital edition of Nyumba Magazine', 'pdf', '/magazines/nyumba-issue-12.pdf', 'https://images.pexels.com/photos/416917/pexels-photo-416917.jpeg?auto=compress&cs=tinysrgb&w=800', 1, 3);
 
+-- ----------------------
+-- Table: comments
+-- ----------------------
+DROP TABLE IF EXISTS `comments`;
+CREATE TABLE `comments` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `article_id` INT(11) NOT NULL,
+  `name` VARCHAR(100) NOT NULL,
+  `email` VARCHAR(255) NOT NULL,
+  `website` VARCHAR(255) DEFAULT NULL,
+  `body` TEXT NOT NULL,
+  `approved` TINYINT(1) DEFAULT 0,
+  `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_comments_article` (`article_id`),
+  KEY `idx_comments_approved` (`approved`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================

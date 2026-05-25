@@ -1,74 +1,120 @@
-# Nyumba Magazine — Full Deployment Guide
-## Deploy to nyumba.impact.co.ke with Database busines1_nyumba
+# Nyumba Magazine — Deployment Guide
+## Deploy to nyumba.impact.co.ke (Shared Hosting / cPanel)
 
 ---
 
 ## Overview
 
-This guide covers everything from pushing code from GitHub to deploying on cPanel at **nyumba.impact.co.ke** using the database **busines1_nyumba**.
+You have already pushed your code to GitHub. This guide covers exactly what to do next to get it live on your shared hosting cPanel account.
 
-**Two-part deployment:**
-1. **Database** → Import `nyumba-mysql.sql` into `busines1_nyumba` via phpMyAdmin
-2. **Frontend** → Build React app → upload to `public_html/` via cPanel File Manager
-3. **API** → Deploy Node.js backend via cPanel Node.js App
-
----
-
-## STEP 1 — Set Up MySQL Database in cPanel
-
-1. Log into **cPanel** at `rs6.rcnoc.com:2083` (or your cPanel login URL)
-2. Go to **MySQL Databases**
-3. You already have `busines1_nyumba` — skip creation if it exists
-4. Go to **phpMyAdmin** → in the left panel, click **busines1_nyumba**
-5. **IMPORTANT**: Before importing, drop all existing tables (since you said you're deleting everything):
-   - Click **Operations** tab → scroll down → click **Drop the database** — OR —
-   - Select all tables → With selected: **Drop**
-6. Click **Import** → **Choose File** → select `nyumba-mysql.sql` from this project
-7. Click **Go** — all tables and sample data will be created
-
-**After import, you will have:**
-- Admin user: `admin@nyumba.co.ke` / password: `admin123`
-- Sample articles, properties, professionals, contractors, suppliers, events
-
-> ⚠️ **Change the admin password immediately** after first login via Admin → Settings → Change Password
+**Shared hosting means:**
+- ✅ You CAN run a Node.js app (most modern shared hosts have "Setup Node.js App" in cPanel)
+- ✅ You CAN use MySQL (already have `busines1_nyumba`)
+- ❌ You do NOT have full root SSH like a VPS
+- ✅ You CAN use FTP or File Manager to upload files (simplest method)
 
 ---
 
-## STEP 2 — Push Code from GitHub to cPanel
+## STEP 1 — Set Up the Database
 
-### Option A: Git Version Control in cPanel (Recommended)
+1. Log into cPanel (e.g. `rs6.rcnoc.com:2083`)
+2. Go to **phpMyAdmin** → click **busines1_nyumba** in the left sidebar
+3. Click **Import** tab → **Choose File** → select `nyumba-mysql.sql` from this project
+4. Click **Go**
 
-Many cPanel installations support Git deployment directly:
+That creates all tables including the new `comments` table.
 
-1. In cPanel, look for **Git™ Version Control** (under Files)
-2. Click **Create**
-3. Set:
-   - **Clone URL**: your GitHub repo URL (e.g. `https://github.com/yourusername/nyumba.git`)
-   - **Repository Path**: e.g. `/home/username/nyumba-repo` (a private folder, NOT public_html)
+> **After import:** Admin login = `admin@nyumba.co.ke` / `admin123` — change this immediately!
+
+---
+
+## STEP 2 — Build the App (do this on Replit or your PC)
+
+Open the Replit terminal and run:
+
+```bash
+# Build the React frontend
+PORT=18977 BASE_PATH=/ pnpm --filter @workspace/nyumba run build
+
+# Build the Node.js API
+pnpm --filter @workspace/api-server run build
+```
+
+This creates:
+- `artifacts/nyumba/dist/public/` → your website files (HTML, CSS, JS)
+- `artifacts/api-server/dist/` → your API server files
+
+---
+
+## STEP 3 — Upload Files to cPanel
+
+You have **3 options**. Pick the one that suits you:
+
+---
+
+### ✅ Option A: FTP with FileZilla (Recommended — easiest for many files)
+
+FTP is like drag-and-drop file transfer between your computer and the server.
+
+1. **Download FileZilla** (free): https://filezilla-project.org/
+2. In FileZilla, go to **File → Site Manager → New Site**
+3. Enter your FTP credentials (find these in cPanel → **FTP Accounts**):
+   - **Host**: `rs6.rcnoc.com` (or your server hostname)
+   - **Protocol**: FTP or SFTP
+   - **Username**: your cPanel username (e.g. `busines1`)
+   - **Password**: your cPanel password
+4. Click **Connect**
+5. On the right panel (server side), navigate to `public_html/`
+6. On the left panel (your computer), navigate to `artifacts/nyumba/dist/public/`
+7. **Select all files** in `dist/public/` and drag them to `public_html/`
+
+> ⚠️ Make sure `index.html` ends up at `public_html/index.html`
+
+---
+
+### ✅ Option B: File Manager in cPanel (no extra software needed)
+
+1. In cPanel → click **File Manager**
+2. Navigate to `public_html/`
+3. Click **Upload** → upload all files from `artifacts/nyumba/dist/public/`
+
+**Tip for large folders:** Zip the `dist/public/` folder first, upload the zip, then right-click it in File Manager → **Extract**.
+
+```bash
+# On Replit terminal — zip it up
+cd artifacts/nyumba/dist
+zip -r nyumba-frontend.zip public/
+```
+Then upload `nyumba-frontend.zip` to `public_html/`, extract it, and move files up one level.
+
+---
+
+### ✅ Option C: cPanel Git Version Control (pulls directly from GitHub — no upload needed)
+
+If your cPanel has **Git™ Version Control** (look under the Files section):
+
+1. In cPanel → **Git™ Version Control** → **Create**
+2. Set:
+   - **Clone URL**: `https://github.com/YOUR_USERNAME/YOUR_REPO.git`
+   - **Repository Path**: `/home/busines1/nyumba-repo` (NOT inside public_html)
    - **Repository Name**: `nyumba`
-4. Click **Create**
-5. To pull updates later: open the repo → click **Update from Remote** (or **Pull**)
-
-> If Git is not available in your cPanel, use Option B below.
-
-### Option B: Manual Upload via File Manager
-
-1. On your local machine / Replit terminal, build the frontend:
+3. Click **Create** — it clones your repo
+4. Then SSH into the repo folder and build (if you have SSH access):
    ```bash
-   cd artifacts/nyumba
-   pnpm run build
+   cd ~/nyumba-repo
+   npm install -g pnpm
+   PORT=80 BASE_PATH=/ pnpm --filter @workspace/nyumba run build
+   cp -r artifacts/nyumba/dist/public/* ~/public_html/
    ```
-2. This creates `artifacts/nyumba/dist/` with all static files
-3. In **cPanel → File Manager**, navigate to `public_html/`
-4. Delete all existing files in `public_html/` (since you're starting fresh)
-5. Upload ALL files from `artifacts/nyumba/dist/` to `public_html/`
-   - Make sure `index.html` is at `public_html/index.html`
-   - Upload the `assets/` subfolder too
-6. Upload the API: copy `artifacts/api-server/` contents to `public_html/api/` (or a separate app folder)
+5. To update later: cPanel → Git Version Control → **Update from Remote** → run build again
 
-### Option C: Deploy via GitHub Actions (CI/CD)
+> **Note:** If your shared host doesn't show Git Version Control in cPanel, use Option A or B instead — those always work.
 
-Create `.github/workflows/deploy.yml` in your repo:
+---
+
+### ✅ Option D: GitHub Actions Auto-Deploy via FTP (push to GitHub = auto deploys)
+
+Create this file in your GitHub repo at `.github/workflows/deploy.yml`:
 
 ```yaml
 name: Deploy to cPanel
@@ -77,190 +123,173 @@ on:
     branches: [main]
 
 jobs:
-  deploy:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
           node-version: '20'
-      - run: npm install -g pnpm
-      - run: pnpm install
-      - run: pnpm --filter @workspace/nyumba run build
+
+      - name: Install pnpm
+        run: npm install -g pnpm
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build frontend
+        run: PORT=80 BASE_PATH=/ pnpm --filter @workspace/nyumba run build
+
       - name: Deploy to cPanel via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
         with:
           server: ${{ secrets.FTP_SERVER }}
           username: ${{ secrets.FTP_USERNAME }}
           password: ${{ secrets.FTP_PASSWORD }}
-          local-dir: artifacts/nyumba/dist/
+          local-dir: artifacts/nyumba/dist/public/
           server-dir: /public_html/
 ```
 
-Add these secrets in your GitHub repo (Settings → Secrets):
-- `FTP_SERVER`: your hosting FTP server (e.g. `rs6.rcnoc.com`)
-- `FTP_USERNAME`: your cPanel FTP username
-- `FTP_PASSWORD`: your cPanel FTP or cPanel password
+Then in your GitHub repo → **Settings → Secrets and variables → Actions** → add:
+
+| Secret Name | Value |
+|---|---|
+| `FTP_SERVER` | e.g. `rs6.rcnoc.com` |
+| `FTP_USERNAME` | your cPanel FTP username |
+| `FTP_PASSWORD` | your cPanel password |
+
+After this, every `git push` to `main` automatically builds and uploads to your server. ✅
 
 ---
 
-## STEP 3 — Build the React Frontend (if doing manually)
+## STEP 4 — Deploy the Node.js API (the backend)
 
-In your **Replit terminal** or local machine:
+Your React site is static files — but the API (articles, properties, admin login) needs Node.js running.
 
-```bash
-# Install dependencies (if not already done)
-pnpm install
+### Check if your host has "Setup Node.js App"
 
-# Build the frontend
-pnpm --filter @workspace/nyumba run build
-```
+1. Log into cPanel and search for **"Node.js"** or look under Software
+2. If you see **Setup Node.js App** — great, follow the steps below
+3. If you don't see it — contact your host and ask: *"Do you support Node.js apps? I need to run a Node.js 20 application."* Most modern shared hosts do (Namecheap, Hostinger, etc.)
 
-Output will be in `artifacts/nyumba/dist/` — these are the files to upload to `public_html/`.
+### Setting up the Node.js App:
 
----
-
-## STEP 4 — Deploy the Node.js API
-
-### Option A: cPanel Node.js App (if your host supports it)
-
-1. In cPanel, go to **Setup Node.js App**
-2. Click **Create Application**:
-   - **Node.js version**: 18 or 20
+1. In cPanel → **Setup Node.js App** → **Create Application**
+   - **Node.js version**: 20 (or latest available)
    - **Application mode**: Production
-   - **Application root**: `/home/username/api` (create this folder separately from public_html)
-   - **Application URL**: subdomain like `api.nyumba.impact.co.ke` OR a path like `nyumba.impact.co.ke/api`
+   - **Application root**: `api` (this creates `/home/busines1/api/`)
+   - **Application URL**: `nyumba.impact.co.ke/api` (path-based) OR `api.nyumba.impact.co.ke` (subdomain)
    - **Application startup file**: `index.mjs`
-3. Upload the compiled API (build it first):
-   ```bash
-   pnpm --filter @workspace/api-server run build
-   ```
-   Then upload contents of `artifacts/api-server/dist/` to the api folder
-4. In the Node.js App panel, click **Run NPM Install**
-5. Set environment variables (see Step 5)
-6. Click **Restart**
+2. Click **Create**
 
-### Option B: Via Subdomain
+3. Upload your built API via FTP or File Manager:
+   - Upload everything from `artifacts/api-server/dist/` to `/home/busines1/api/`
+   - `index.mjs` should be at `/home/busines1/api/index.mjs`
 
-1. In cPanel → **Subdomains**, create `api.nyumba.impact.co.ke`
-2. Point it to the api folder (e.g. `/home/username/api`)
-3. Follow Option A steps above
+4. Back in **Setup Node.js App** → your app → click **Run NPM Install**
 
----
-
-## STEP 5 — Set Environment Variables
-
-In the **Node.js App** panel → **Environment Variables**, add:
+5. Click **Environment Variables** and add:
 
 | Variable | Value |
 |---|---|
-| `DATABASE_URL` | `mysql://busines1_nyumba_user:YOUR_PASSWORD@localhost:3306/busines1_nyumba` |
-| `JWT_SECRET` | A long random string, minimum 32 characters (generate at random.org) |
+| `PORT` | The port cPanel assigns (shown in the app panel) |
 | `NODE_ENV` | `production` |
-| `PORT` | `8080` (or whatever cPanel assigns) |
+| `DATABASE_URL` | `mysql2://DB_USER:DB_PASS@localhost:3306/busines1_nyumba` |
+| `JWT_SECRET` | A strong random string (32+ characters) |
 
-> **Finding database credentials**: cPanel → MySQL Databases → note the username and password you assigned to `busines1_nyumba`
+6. Click **Restart**
+
+> **Finding your MySQL password:** cPanel → **MySQL Databases** → scroll to "Current Databases" — note the username assigned. If you don't know the password, you can set a new one for that user in the same page.
 
 ---
 
-## STEP 6 — Configure .htaccess for React Router
+## STEP 5 — Set Up .htaccess for React Router
 
-Create or update `public_html/.htaccess`:
+Without this, refreshing any page other than `/` gives a 404.
+
+Create/edit `public_html/.htaccess`:
 
 ```apache
 Options -MultiViews
 RewriteEngine On
 
+# Serve API through Node.js (if using path-based API on same domain)
+RewriteCond %{REQUEST_URI} ^/api [NC]
+RewriteRule ^ - [L]
+
 # Serve static files directly
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 
-# Send all other requests to index.html (React Router)
+# All other requests → React app
 RewriteRule ^ index.html [QR,L]
 ```
 
-This ensures page refreshes work correctly on all routes (e.g. `/admin`, `/properties/1`).
-
 ---
 
-## STEP 7 — Configure API URL in Frontend
+## STEP 6 — Verify Everything Works
 
-The frontend uses relative `/api/` paths which work when both frontend and API are on the same domain.
-
-**If your API is on a subdomain** (e.g. `api.nyumba.impact.co.ke`):
-
-Edit `artifacts/nyumba/src/lib/api.ts` (or wherever API calls are made) and change:
-```
-/api/
-```
-to:
-```
-https://api.nyumba.impact.co.ke/api/
-```
-
-Then rebuild: `pnpm --filter @workspace/nyumba run build`
-
----
-
-## STEP 8 — Verify Deployment
-
-1. Visit `https://nyumba.impact.co.ke` — homepage should load
-2. Visit `https://nyumba.impact.co.ke/admin` — login with `admin@nyumba.co.ke` / `admin123`
-3. Check API health: `https://nyumba.impact.co.ke/api/health`
-4. Create a test article via Admin panel and verify it appears on the homepage
-5. Register a new user via `/auth` and verify it appears in Admin → Settings (user count)
-6. Submit a contact form and verify it appears in Admin → Messages
-
----
-
-## STEP 9 — After Going Live (Security Checklist)
-
-- [ ] Change admin password via Admin → Settings → Change Password
-- [ ] Set a strong `JWT_SECRET` environment variable (not the default)
-- [ ] Verify HTTPS is enabled (`https://` not `http://`)
-- [ ] Test all pages work after page refresh (htaccess routing)
-- [ ] Test the contact form saves to Messages
-- [ ] Test new user registration saves to database
-- [ ] Test adding a property from Submit Listing page
-
----
-
-## Common Issues & Fixes
-
-| Problem | Solution |
-|---|---|
-| White screen on page refresh | Check `.htaccess` file is in `public_html/` |
-| API calls failing (404) | Check Node.js App is running; check `DATABASE_URL` env var |
-| Database connection error | Verify username/password in `DATABASE_URL`; check user has ALL PRIVILEGES on `busines1_nyumba` |
-| Admin login fails | Verify `JWT_SECRET` is set; try re-importing `nyumba-mysql.sql` |
-| Images not loading | Images use external URLs (Pexels CDN) — verify internet connectivity |
-| `.htaccess` redirect loop | Add `RewriteCond %{REQUEST_FILENAME} !-f` before the rewrite rule |
-| 500 error on API | Check Node.js App logs in cPanel; verify all env variables are set |
+1. Visit `https://nyumba.impact.co.ke` — homepage loads ✅
+2. Click any article → article detail page opens ✅
+3. Visit `https://nyumba.impact.co.ke/admin` → login works ✅
+4. Check API: `https://nyumba.impact.co.ke/api/health` → returns `{"ok":true}` ✅
+5. Refresh any page (e.g. `/properties`) → page loads without 404 ✅
 
 ---
 
 ## Re-Deploying After Code Changes
 
+### If using FTP (Options A/B):
 ```bash
-# On Replit / local machine:
+# 1. Make changes, then rebuild
+PORT=80 BASE_PATH=/ pnpm --filter @workspace/nyumba run build
 
-# 1. Make your changes in code
+# 2. Upload dist/public/ contents to public_html/ via FileZilla or File Manager
+# 3. If API changed, rebuild API and upload dist/ to api folder, then Restart in Node.js App panel
+```
 
-# 2. Rebuild frontend
-pnpm --filter @workspace/nyumba run build
-
-# 3. Rebuild API (if API changed)
-pnpm --filter @workspace/api-server run build
-
-# 4. Upload dist/ files to public_html/ via File Manager
-# 5. Upload new API files to api folder
-# 6. In cPanel Node.js App → Restart
-
-# OR push to GitHub and let GitHub Actions deploy automatically
+### If using GitHub Actions (Option D):
+```bash
 git add .
 git commit -m "Update: describe your changes"
 git push origin main
+# GitHub Actions automatically builds and uploads — done!
 ```
+
+---
+
+## Common Problems & Fixes
+
+| Problem | Fix |
+|---|---|
+| White screen / blank page | Check `.htaccess` is in `public_html/` and correct |
+| 404 on page refresh | Check `.htaccess` RewriteRule is set up correctly |
+| API not responding | Check Node.js App is running in cPanel; check all env vars are set |
+| Database connection error | Verify `DATABASE_URL` format; ensure DB user has ALL PRIVILEGES |
+| Admin login fails | Check `JWT_SECRET` env var is set in Node.js App panel |
+| Files uploaded but site unchanged | Clear browser cache (Ctrl+Shift+R) |
+| FTP connection refused | Try passive mode in FileZilla (Transfer → Transfer Type → Passive) |
+| "Setup Node.js App" not in cPanel | Contact your host — ask if Node.js is supported |
+
+---
+
+## Database Tables Reference
+
+| Table | Purpose |
+|---|---|
+| `users` | Admin and registered user accounts |
+| `articles` | Magazine articles and blog posts |
+| `comments` | Article comments (moderated) |
+| `properties` | Real estate listings |
+| `professionals` | Architects, engineers, surveyors |
+| `contractors` | Contractor company listings |
+| `materials_suppliers` | Building materials suppliers |
+| `events` | Industry events and exhibitions |
+| `messages` | Contact form submissions |
+| `site_settings` | Admin-editable site config |
+| `homepage_slider` | Sidebar slider items |
+| `newsletter_subscribers` | Email newsletter signups |
 
 ---
 
@@ -268,38 +297,22 @@ git push origin main
 
 - **URL**: `https://nyumba.impact.co.ke/admin`
 - **Email**: `admin@nyumba.co.ke`
-- **Password**: `admin123` ← **CHANGE THIS IMMEDIATELY**
+- **Password**: `admin123` ← **CHANGE THIS IMMEDIATELY after first login**
 
 ---
 
-## Database: busines1_nyumba — Table Reference
+## Quick Summary — What To Do Right Now
 
-| Table | Purpose |
-|---|---|
-| `users` | Registered users and admin accounts |
-| `articles` | Magazine articles and blog posts |
-| `properties` | Real estate listings |
-| `professionals` | Architect, engineer, surveyor profiles |
-| `contractors` | Contractor company listings |
-| `materials_suppliers` | Building materials and suppliers |
-| `events` | Industry events and exhibitions |
-| `messages` | Contact form submissions |
-| `site_settings` | Configurable site settings (admin-editable) |
-| `homepage_slider` | Sidebar resource slider items |
-| `newsletter_subscribers` | Email newsletter signups |
+Since you've already pushed to GitHub, here's the shortest path to go live:
 
----
-
-## Next Admin Handover Notes
-
-When handing over to a new admin:
-1. Give them the cPanel login credentials (separate from the app)
-2. The admin panel is at `https://nyumba.impact.co.ke/admin`
-3. Create a new admin account via phpMyAdmin:
-   ```sql
-   INSERT INTO users (email, password_hash, first_name, last_name, role, user_type)
-   VALUES ('newadmin@email.com', '$2a$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcfl7p92ldGxad68LJZdL17lh.W', 'New', 'Admin', 'admin', 'admin');
-   ```
-   (This sets password to `admin123` — new admin must change it on first login)
-4. All settings are configurable via Admin → Settings without touching code
-5. To add articles, properties, events: use Admin Dashboard → respective tab → New button
+```
+1. Import nyumba-mysql.sql into phpMyAdmin (busines1_nyumba)
+2. Build the app on Replit:
+      PORT=80 BASE_PATH=/ pnpm --filter @workspace/nyumba run build
+3. Upload artifacts/nyumba/dist/public/ to public_html/ via FileZilla or File Manager
+4. Set up Node.js App in cPanel for the API backend
+5. Upload artifacts/api-server/dist/ to your api folder
+6. Set environment variables in Node.js App panel
+7. Add .htaccess to public_html/
+8. Visit your site!
+```

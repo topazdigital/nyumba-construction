@@ -12,7 +12,7 @@ const authHdrs = () => ({
   'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
 });
 
-type Tab = 'overview' | 'articles' | 'properties' | 'professionals' | 'contractors' | 'suppliers' | 'events' | 'messages' | 'slider' | 'settings';
+type Tab = 'overview' | 'articles' | 'properties' | 'professionals' | 'contractors' | 'suppliers' | 'events' | 'messages' | 'comments' | 'slider' | 'settings';
 
 const Modal: React.FC<{ title: string; onClose: () => void; children: React.ReactNode }> = ({ title, onClose, children }) => (
   <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center p-4 overflow-y-auto">
@@ -44,6 +44,7 @@ const AdminDashboard: React.FC = () => {
   const [suppliers, setSuppliers] = useState<any[]>([]);
   const [events, setEvents] = useState<any[]>([]);
   const [messages, setMessages] = useState<any[]>([]);
+  const [comments, setComments] = useState<any[]>([]);
   const [sliderItems, setSliderItems] = useState<any[]>([]);
   const [stats, setStats] = useState({ articles: 0, properties: 0, professionals: 0, users: 0 });
   const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
@@ -78,6 +79,7 @@ const AdminDashboard: React.FC = () => {
         fetch(`${API}/slider`).then(r => r.json()),
         fetch(`${API}/admin/stats`, { headers: authHdrs() }).then(r => r.json()),
         fetch(`${API}/settings`).then(r => r.json()),
+        fetch(`${API}/comments?articleId=0`, { headers: authHdrs() }).then(r => r.json()).catch(() => []),
       ]);
       const get = (i: number) => results[i].status === 'fulfilled' ? (results[i] as any).value : [];
       setArticles(Array.isArray(get(0)) ? get(0) : []);
@@ -90,6 +92,7 @@ const AdminDashboard: React.FC = () => {
       setSliderItems(Array.isArray(get(7)) ? get(7) : []);
       setStats(get(8) || {});
       setSiteSettings(get(9) || {});
+      setComments(Array.isArray(get(10)) ? get(10) : []);
     } catch (e) { console.error(e); }
   }, []);
 
@@ -180,6 +183,7 @@ const AdminDashboard: React.FC = () => {
     { id: 'suppliers', name: 'Suppliers', icon: Package },
     { id: 'events', name: 'Events', icon: Clock },
     { id: 'messages', name: `Messages${messages.filter(m => !m.readStatus).length > 0 ? ` (${messages.filter(m => !m.readStatus).length})` : ''}`, icon: MessageSquare },
+    { id: 'comments', name: `Comments${comments.filter(c => !c.approved).length > 0 ? ` (${comments.filter(c => !c.approved).length})` : ''}`, icon: MessageSquare },
     { id: 'slider', name: 'Slider', icon: Image },
     { id: 'settings', name: 'Settings', icon: Settings },
   ];
@@ -840,6 +844,94 @@ const AdminDashboard: React.FC = () => {
               </table>
               {messages.length === 0 && <div className="py-12 text-center text-gray-400 text-sm">No messages yet.</div>}
             </div>
+          </div>
+        )}
+
+        {/* ── COMMENTS ── */}
+        {activeTab === 'comments' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Article Comments</h2>
+                <p className="text-xs text-gray-500 mt-0.5">
+                  {comments.filter(c => !c.approved).length} pending approval · {comments.filter(c => c.approved).length} approved
+                </p>
+              </div>
+            </div>
+
+            {/* Pending first */}
+            {['pending', 'approved'].map(group => {
+              const isPending = group === 'pending';
+              const list = comments.filter(c => isPending ? !c.approved : c.approved);
+              if (list.length === 0) return null;
+              return (
+                <div key={group}>
+                  <h3 className={`text-xs font-bold uppercase tracking-wider mb-3 px-1 ${isPending ? 'text-amber-600' : 'text-green-600'}`}>
+                    {isPending ? `⏳ Awaiting Approval (${list.length})` : `✅ Approved (${list.length})`}
+                  </h3>
+                  <div className="space-y-3">
+                    {list.map(c => (
+                      <div key={c.id} className={`bg-white rounded-xl shadow-sm p-4 border-l-4 ${isPending ? 'border-amber-400' : 'border-green-400'}`}>
+                        <div className="flex flex-col sm:flex-row sm:items-start gap-3">
+                          <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-500 font-bold text-sm flex-shrink-0">
+                            {c.name?.slice(0, 2).toUpperCase()}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 mb-1">
+                              <span className="font-semibold text-gray-800 text-sm">{c.name}</span>
+                              <span className="text-xs text-gray-400">{c.email}</span>
+                              {c.website && <a href={c.website} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-500 hover:underline">{c.website}</a>}
+                              <span className="text-xs text-gray-400 ml-auto">{new Date(c.createdAt).toLocaleDateString('en-KE', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+                            </div>
+                            <p className="text-sm text-gray-700 leading-relaxed mb-2">{c.body}</p>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs text-gray-400">Article #{c.articleId}</span>
+                              <span className="text-gray-200">·</span>
+                              {isPending ? (
+                                <button
+                                  onClick={async () => {
+                                    await fetch(`${API}/comments/${c.id}`, { method: 'PUT', headers: authHdrs(), body: JSON.stringify({ approved: true }) });
+                                    fetchAll();
+                                    showToast('Comment approved');
+                                  }}
+                                  className="text-xs bg-green-100 text-green-700 hover:bg-green-200 px-2.5 py-1 rounded-lg font-medium transition-colors"
+                                >
+                                  ✓ Approve
+                                </button>
+                              ) : (
+                                <button
+                                  onClick={async () => {
+                                    await fetch(`${API}/comments/${c.id}`, { method: 'PUT', headers: authHdrs(), body: JSON.stringify({ approved: false }) });
+                                    fetchAll();
+                                    showToast('Comment unpublished');
+                                  }}
+                                  className="text-xs bg-gray-100 text-gray-600 hover:bg-gray-200 px-2.5 py-1 rounded-lg font-medium transition-colors"
+                                >
+                                  Unpublish
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleDelete('comments', c.id)}
+                                className="text-xs bg-red-50 text-red-600 hover:bg-red-100 px-2.5 py-1 rounded-lg font-medium transition-colors"
+                              >
+                                Delete
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            {comments.length === 0 && (
+              <div className="text-center py-16 text-gray-400">
+                <MessageSquare className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                <p className="text-sm">No comments yet. They'll appear here once readers submit them on article pages.</p>
+              </div>
+            )}
           </div>
         )}
 

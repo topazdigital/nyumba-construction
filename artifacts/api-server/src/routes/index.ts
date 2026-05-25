@@ -9,6 +9,7 @@ import suppliersRouter from "./suppliers";
 import eventsRouter from "./events";
 import messagesRouter from "./messages";
 import settingsRouter from "./settings";
+import commentsRouter from "./comments";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(suppliersRouter);
 router.use(eventsRouter);
 router.use(messagesRouter);
 router.use(settingsRouter);
+router.use(commentsRouter);
 
 export default router;
