@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "EiXqjU1Jq28a0fS2Y2sOI"
+uri = "file://nyumba-cpanel.zip"
+type = "unspecified"
+title = "nyumba-cpanel.zip — Upload this to cPanel"
