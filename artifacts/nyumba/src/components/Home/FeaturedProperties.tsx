@@ -108,7 +108,7 @@ const FeaturedProperties: React.FC = () => {
               </div>
               
               <Link
-                to={`/properties/${property.id}`}
+                to={`/property/${property.id}`}
                 className="inline-flex items-center space-x-2 text-blue-700 hover:text-blue-800 font-medium transition-colors duration-200"
               >
                 <span>View Details</span>

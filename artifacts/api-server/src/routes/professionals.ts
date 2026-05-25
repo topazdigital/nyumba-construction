@@ -32,10 +32,11 @@ router.get("/professionals/:id", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-// POST: any authenticated user can submit a professional profile
+// POST: any authenticated user can submit a professional profile (moderation fields forced server-side)
 router.post("/professionals", requireAuth, async (req, res) => {
   try {
-    const [p] = await db.insert(professionalsTable).values(req.body).returning();
+    const { published: _p, verified: _v, ...safeBody } = req.body;
+    const [p] = await db.insert(professionalsTable).values({ ...safeBody, published: false, verified: false }).returning();
     res.status(201).json(p);
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });

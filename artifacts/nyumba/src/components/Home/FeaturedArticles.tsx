@@ -90,7 +90,7 @@ const FeaturedArticles: React.FC = () => {
               </div>
               
               <Link
-                to={`/articles/${article.id}`}
+                to={`/article/${article.id}`}
                 className="inline-flex items-center space-x-2 text-blue-700 hover:text-blue-800 font-medium transition-colors duration-200"
               >
                 <span>Read More</span>

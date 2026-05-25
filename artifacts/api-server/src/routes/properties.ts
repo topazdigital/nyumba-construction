@@ -33,10 +33,11 @@ router.get("/properties/:id", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-// POST: any authenticated user can submit a property listing
+// POST: any authenticated user can submit a property listing (moderation fields forced server-side)
 router.post("/properties", requireAuth, async (req, res) => {
   try {
-    const [property] = await db.insert(propertiesTable).values(req.body).returning();
+    const { published: _p, featured: _f, ...safeBody } = req.body;
+    const [property] = await db.insert(propertiesTable).values({ ...safeBody, published: false, featured: false }).returning();
     res.status(201).json(property);
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });

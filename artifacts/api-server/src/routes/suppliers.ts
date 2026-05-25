@@ -30,10 +30,11 @@ router.get("/suppliers/:id", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-// POST: any authenticated user can submit a supplier listing
+// POST: any authenticated user can submit a supplier listing (moderation fields forced server-side)
 router.post("/suppliers", requireAuth, async (req, res) => {
   try {
-    const [s] = await db.insert(suppliersTable).values(req.body).returning();
+    const { published: _p, verified: _v, ...safeBody } = req.body;
+    const [s] = await db.insert(suppliersTable).values({ ...safeBody, published: false, verified: false }).returning();
     res.status(201).json(s);
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });

@@ -31,10 +31,11 @@ router.get("/contractors/:id", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-// POST: any authenticated user can submit a contractor listing
+// POST: any authenticated user can submit a contractor listing (moderation fields forced server-side)
 router.post("/contractors", requireAuth, async (req, res) => {
   try {
-    const [c] = await db.insert(contractorsTable).values(req.body).returning();
+    const { published: _p, verified: _v, ...safeBody } = req.body;
+    const [c] = await db.insert(contractorsTable).values({ ...safeBody, published: false, verified: false }).returning();
     res.status(201).json(c);
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
