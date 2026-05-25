@@ -17,13 +17,17 @@ router.post("/auth/signup", async (req, res) => {
       lastName,
       phone,
       location,
-      userType = "user",
+      userType: rawUserType = "user",
       profession,
       company,
       description,
       website,
       licenseNumber,
     } = req.body;
+
+    // Allowlist: self-signup may never grant admin. Only trusted roles allowed.
+    const ALLOWED_SIGNUP_TYPES = ["user", "professional", "business"] as const;
+    const userType = ALLOWED_SIGNUP_TYPES.includes(rawUserType as any) ? rawUserType as typeof ALLOWED_SIGNUP_TYPES[number] : "user";
 
     const existing = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
     if (existing.length > 0) {

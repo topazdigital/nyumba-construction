@@ -74,7 +74,7 @@ const AdminDashboard: React.FC = () => {
         fetch(`${API}/events?published=false&limit=100`).then(r => r.json()),
         fetch(`${API}/messages`, { headers: authHdrs() }).then(r => r.json()),
         fetch(`${API}/slider`).then(r => r.json()),
-        fetch(`${API}/admin/stats`).then(r => r.json()),
+        fetch(`${API}/admin/stats`, { headers: authHdrs() }).then(r => r.json()),
         fetch(`${API}/settings`).then(r => r.json()),
       ]);
       const get = (i: number) => results[i].status === 'fulfilled' ? (results[i] as any).value : [];
