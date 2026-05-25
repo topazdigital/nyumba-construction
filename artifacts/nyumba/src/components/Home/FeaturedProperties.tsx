@@ -1,131 +1,122 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, ArrowRight } from 'lucide-react';
 
 const FeaturedProperties: React.FC = () => {
-  const featuredProperties = [
-    {
-      id: '1',
-      title: 'Modern Luxury Villa',
-      price: 850000,
-      location: 'Beverly Hills, CA',
-      bedrooms: 4,
-      bathrooms: 3,
-      area: 3200,
-      image: 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800',
-      type: 'Villa'
-    },
-    {
-      id: '2',
-      title: 'Contemporary Downtown Condo',
-      price: 520000,
-      location: 'Manhattan, NY',
-      bedrooms: 2,
-      bathrooms: 2,
-      area: 1800,
-      image: 'https://images.pexels.com/photos/259588/pexels-photo-259588.jpeg?auto=compress&cs=tinysrgb&w=800',
-      type: 'Condo'
-    },
-    {
-      id: '3',
-      title: 'Suburban Family Home',
-      price: 425000,
-      location: 'Austin, TX',
-      bedrooms: 3,
-      bathrooms: 2,
-      area: 2400,
-      image: 'https://images.pexels.com/photos/280222/pexels-photo-280222.jpeg?auto=compress&cs=tinysrgb&w=800',
-      type: 'House'
-    }
-  ];
+  const [properties, setProperties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('en-US', {
-      style: 'currency',
-      currency: 'USD',
-      minimumFractionDigits: 0,
-    }).format(price);
-  };
+  useEffect(() => {
+    fetch('/api/properties?featured=true&limit=3')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setProperties(data); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('en-KE', { style: 'currency', currency: 'KES', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(price);
+
+  if (loading) return (
+    <section className="py-6">
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600" />
+      </div>
+    </section>
+  );
+
+  if (!properties.length) return null;
 
   return (
-    <section className="py-8">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-          Featured Properties
-        </h2>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Discover premium properties from verified listings
-        </p>
+    <section className="py-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Featured Properties</h2>
+          <p className="text-sm text-gray-500 mt-1">Premium listings from verified sellers across Kenya</p>
+        </div>
+        <Link to="/properties" className="text-sm text-orange-600 hover:text-orange-700 font-medium flex items-center gap-1">
+          View All <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {featuredProperties.map((property) => (
-          <div
-            key={property.id}
-            className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group"
-          >
-            <div className="relative overflow-hidden">
-              <img
-                src={property.image}
-                alt={property.title}
-                className="w-full h-56 object-cover group-hover:scale-105 transition-transform duration-300"
-              />
-              <div className="absolute top-4 left-4">
-                <span className="bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                  {property.type}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {properties.map((property) => {
+          const imgs = Array.isArray(property.images) ? property.images : (typeof property.images === 'string' ? JSON.parse(property.images || '[]') : []);
+          const img = imgs[0] || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800';
+          const amenities = Array.isArray(property.amenities) ? property.amenities : (typeof property.amenities === 'string' ? JSON.parse(property.amenities || '[]') : []);
+
+          return (
+            <Link
+              key={property.id}
+              to={`/property/${property.id}`}
+              className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 group flex flex-col"
+            >
+              <div className="relative overflow-hidden">
+                <img
+                  src={img}
+                  alt={property.title}
+                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute top-3 left-3">
+                  <span className="bg-orange-600 text-white px-2.5 py-0.5 rounded-full text-xs font-semibold capitalize">
+                    {property.propertyType}
+                  </span>
+                </div>
+                <div className="absolute bottom-3 left-3">
+                  <span className="bg-white/95 text-gray-900 px-2.5 py-1 rounded-lg text-sm font-bold shadow-md">
+                    {formatPrice(Number(property.price))}
+                  </span>
+                </div>
+              </div>
+
+              <div className="p-4 flex flex-col flex-1">
+                <h3 className="text-sm font-bold text-gray-900 mb-1 group-hover:text-blue-700 transition-colors line-clamp-1">
+                  {property.title}
+                </h3>
+
+                <div className="flex items-center text-gray-500 mb-3">
+                  <MapPin className="h-3.5 w-3.5 mr-1 flex-shrink-0" />
+                  <span className="text-xs truncate">{property.location}</span>
+                </div>
+
+                <div className="flex items-center gap-3 text-xs text-gray-500 mb-3">
+                  {Number(property.bedrooms) > 0 && (
+                    <span className="flex items-center gap-0.5"><Bed className="h-3.5 w-3.5" />{property.bedrooms} beds</span>
+                  )}
+                  {Number(property.bathrooms) > 0 && (
+                    <span className="flex items-center gap-0.5"><Bath className="h-3.5 w-3.5" />{property.bathrooms} baths</span>
+                  )}
+                  {Number(property.area) > 0 && (
+                    <span className="flex items-center gap-0.5"><Square className="h-3.5 w-3.5" />{Number(property.area).toLocaleString()} sqft</span>
+                  )}
+                </div>
+
+                {amenities.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-3">
+                    {amenities.slice(0, 3).map((a: string, i: number) => (
+                      <span key={i} className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">{a}</span>
+                    ))}
+                    {amenities.length > 3 && (
+                      <span className="bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full text-xs">+{amenities.length - 3}</span>
+                    )}
+                  </div>
+                )}
+
+                <span className="mt-auto inline-flex items-center gap-1.5 text-blue-700 text-xs font-semibold">
+                  View Details <ArrowRight className="h-3.5 w-3.5" />
                 </span>
               </div>
-              <div className="absolute bottom-4 right-4">
-                <span className="bg-white text-gray-900 px-3 py-1 rounded-full text-lg font-bold shadow-lg">
-                  {formatPrice(property.price)}
-                </span>
-              </div>
-            </div>
-            
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-2 group-hover:text-blue-700 transition-colors duration-200">
-                {property.title}
-              </h3>
-              
-              <div className="flex items-center text-gray-600 mb-4">
-                <MapPin className="h-4 w-4 mr-1" />
-                <span className="text-sm">{property.location}</span>
-              </div>
-              
-              <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                <div className="flex items-center space-x-1">
-                  <Bed className="h-4 w-4" />
-                  <span>{property.bedrooms} beds</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Bath className="h-4 w-4" />
-                  <span>{property.bathrooms} baths</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Square className="h-4 w-4" />
-                  <span>{property.area} sqft</span>
-                </div>
-              </div>
-              
-              <Link
-                to={`/property/${property.id}`}
-                className="inline-flex items-center space-x-2 text-blue-700 hover:text-blue-800 font-medium transition-colors duration-200"
-              >
-                <span>View Details</span>
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </div>
-        ))}
+            </Link>
+          );
+        })}
       </div>
 
-      <div className="text-center mt-8">
+      <div className="text-center mt-6">
         <Link
           to="/properties"
-          className="bg-orange-600 hover:bg-orange-700 text-white px-8 py-3 rounded-lg font-semibold transition-colors duration-200 inline-flex items-center space-x-2"
+          className="inline-flex items-center gap-2 bg-orange-600 hover:bg-orange-700 text-white px-6 py-2.5 rounded-lg text-sm font-semibold transition-colors"
         >
-          <span>View All Properties</span>
-          <ArrowRight className="h-5 w-5" />
+          Browse All Properties <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
     </section>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Building2, Menu, X, User, LogOut, ChevronDown, Plus, Clock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
@@ -7,22 +7,20 @@ const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const dropdownTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const location = useLocation();
   const { user, signOut } = useAuth();
 
-  // Get current date and time
-  const getCurrentDateTime = () => {
-    const now = new Date();
-    const options: Intl.DateTimeFormatOptions = {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
+  const [dateStr, setDateStr] = useState('');
+  useEffect(() => {
+    const update = () => {
+      const now = new Date();
+      setDateStr(now.toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }));
     };
-    return now.toLocaleDateString('en-US', options);
-  };
+    update();
+    const t = setInterval(update, 60000);
+    return () => clearInterval(t);
+  }, []);
 
   const navigation = [
     { name: 'HOME', href: '/' },
@@ -33,18 +31,19 @@ const Header: React.FC = () => {
       name: 'REAL ESTATE',
       href: '/properties',
       submenu: [
-        { name: 'Residential Properties', href: '/properties/residential' },
-        { name: 'Commercial Properties', href: '/properties/commercial' },
+        { name: 'All Properties', href: '/properties' },
+        { name: 'Residential', href: '/properties/residential' },
+        { name: 'Commercial', href: '/properties/commercial' },
         { name: 'Land & Development', href: '/properties/land' },
-        { name: 'Property Investment', href: '/properties/investment' },
         { name: 'Rental Properties', href: '/properties/rental' },
-        { name: 'Property Valuation', href: '/properties/valuation' },
+        { name: 'Investment', href: '/properties/investment' },
       ]
     },
     {
       name: 'PROFESSIONALS',
       href: '/professionals',
       submenu: [
+        { name: 'All Professionals', href: '/professionals' },
         { name: 'Architects', href: '/professionals/architects' },
         { name: 'Structural Engineers', href: '/professionals/structural-engineers' },
         { name: 'Civil Engineers', href: '/professionals/civil-engineers' },
@@ -52,124 +51,186 @@ const Header: React.FC = () => {
         { name: 'Project Managers', href: '/professionals/project-managers' },
         { name: 'Interior Designers', href: '/professionals/interior-designers' },
         { name: 'Land Surveyors', href: '/professionals/land-surveyors' },
-        { name: 'Building Inspectors', href: '/professionals/building-inspectors' },
       ]
     },
     {
       name: 'CONTRACTORS',
       href: '/contractors',
       submenu: [
+        { name: 'All Contractors', href: '/contractors' },
         { name: 'General Contractors', href: '/contractors/general' },
-        { name: 'Electrical Contractors', href: '/contractors/electrical' },
-        { name: 'Plumbing Contractors', href: '/contractors/plumbing' },
-        { name: 'Roofing Contractors', href: '/contractors/roofing' },
-        { name: 'HVAC Contractors', href: '/contractors/hvac' },
-        { name: 'Painting Contractors', href: '/contractors/painting' },
-        { name: 'Flooring Contractors', href: '/contractors/flooring' },
-        { name: 'Landscaping Contractors', href: '/contractors/landscaping' },
+        { name: 'Electrical', href: '/contractors/electrical' },
+        { name: 'Plumbing', href: '/contractors/plumbing' },
+        { name: 'Roofing', href: '/contractors/roofing' },
+        { name: 'HVAC', href: '/contractors/hvac' },
+        { name: 'Painting', href: '/contractors/painting' },
       ]
     },
     {
-      name: 'MATERIALS & SUPPLIERS',
+      name: 'MATERIALS',
       href: '/materials',
       submenu: [
+        { name: 'All Materials', href: '/materials' },
         { name: 'Cement & Concrete', href: '/materials/cement' },
         { name: 'Steel & Metal', href: '/materials/steel' },
         { name: 'Roofing Materials', href: '/materials/roofing' },
         { name: 'Doors & Windows', href: '/materials/doors-windows' },
         { name: 'Tiles & Flooring', href: '/materials/tiles' },
         { name: 'Paints & Finishes', href: '/materials/paints' },
-        { name: 'Plumbing Supplies', href: '/materials/plumbing' },
         { name: 'Electrical Supplies', href: '/materials/electrical' },
-        { name: 'Insulation Materials', href: '/materials/insulation' },
         { name: 'Hardware & Tools', href: '/materials/hardware' },
       ]
     },
     { name: 'EVENTS', href: '/events' },
-    { name: 'FLIP COPY', href: '/flip-copy' },
+    { name: 'ARTICLES', href: '/articles' },
     { name: 'CONTACT', href: '/contact' },
   ];
 
-  const isActive = (href: string) => location.pathname === href;
+  const isActive = (href: string) => location.pathname === href || (href !== '/' && location.pathname.startsWith(href));
 
   const handleSignOut = async () => {
-    try {
-      await signOut();
-      setIsUserMenuOpen(false);
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
+    try { await signOut(); setIsUserMenuOpen(false); }
+    catch (e) { console.error(e); }
   };
 
-  const handleDropdownToggle = (name: string) => {
-    setActiveDropdown(activeDropdown === name ? null : name);
+  const openDropdown = (name: string) => {
+    if (dropdownTimer.current) clearTimeout(dropdownTimer.current);
+    setActiveDropdown(name);
+  };
+
+  const closeDropdown = () => {
+    dropdownTimer.current = setTimeout(() => setActiveDropdown(null), 150);
   };
 
   return (
-    <header className="bg-white shadow-lg border-b border-gray-200 sticky top-0 z-50">
+    <header className="bg-white shadow-md border-b border-gray-200 sticky top-0 z-50">
       {/* Top Banner */}
-      <div className="bg-gradient-to-r from-blue-700 to-blue-800 text-white py-2">
+      <div className="bg-blue-800 text-white py-1.5">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center text-sm">
-            <div className="flex items-center space-x-2">
-              <Clock className="h-4 w-4" />
-              <span>{getCurrentDateTime()}</span>
+          <div className="flex justify-between items-center text-xs">
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-3 w-3" />
+              <span>{dateStr}</span>
             </div>
-            <div className="hidden md:flex items-center space-x-4">
-              <span>📧 info@nyumba.co.ke</span>
-              <span>📞 +254 700 123 456</span>
+            <div className="hidden md:flex items-center gap-4">
+              <span>✉ info@nyumba.co.ke</span>
+              <span>☎ +254 700 123 456</span>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Logo + Action Row */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
-          {/* Logo */}
-          <Link to="/" className="flex items-center space-x-2">
-            <Building2 className="h-8 w-8 text-blue-700" />
-            <span className="text-2xl font-bold text-gray-900">Nyumba</span>
+        <div className="flex justify-between items-center h-14">
+          <Link to="/" className="flex items-center gap-2 flex-shrink-0">
+            <Building2 className="h-7 w-7 text-blue-700" />
+            <span className="text-xl font-bold text-gray-900 tracking-tight">Nyumba</span>
+            <span className="hidden sm:block text-xs text-gray-500 font-normal border-l border-gray-300 pl-2 ml-1">Magazine</span>
           </Link>
 
-          {/* Desktop Navigation */}
-          <nav className="hidden lg:flex space-x-1">
-            {navigation.map((item) => (
-              <div key={item.name} className="relative group">
-                {item.submenu ? (
-                  <div className="relative">
-                    <button
-                      className={`flex items-center space-x-1 px-3 py-2 text-sm font-medium transition-colors duration-200 rounded-lg ${
-                        isActive(item.href)
-                          ? 'text-blue-700 bg-blue-50'
-                          : 'text-gray-700 hover:text-blue-700 hover:bg-gray-50'
-                      }`}
-                      onMouseEnter={() => setActiveDropdown(item.name)}
-                    >
-                      <span>{item.name}</span>
-                      <ChevronDown className="h-4 w-4" />
+          {/* Desktop Actions */}
+          <div className="hidden lg:flex items-center gap-3">
+            <Link
+              to="/submit-listing"
+              className="bg-orange-600 hover:bg-orange-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Submit Listing
+            </Link>
+
+            {user ? (
+              <div className="relative">
+                <button
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center gap-1.5 text-gray-700 hover:text-blue-700 px-3 py-1.5 rounded-lg hover:bg-gray-50 text-xs font-medium transition-colors"
+                >
+                  <User className="h-4 w-4" />
+                  <span>{user.firstName}</span>
+                  <ChevronDown className="h-3.5 w-3.5" />
+                </button>
+                {isUserMenuOpen && (
+                  <div className="absolute right-0 mt-1 w-44 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-50">
+                    {user.userType === 'admin' && (
+                      <Link to="/admin" className="block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100" onClick={() => setIsUserMenuOpen(false)}>
+                        Admin Dashboard
+                      </Link>
+                    )}
+                    <Link to="/profile" className="block px-4 py-2 text-xs text-gray-700 hover:bg-gray-100" onClick={() => setIsUserMenuOpen(false)}>
+                      My Profile
+                    </Link>
+                    <button onClick={handleSignOut} className="w-full text-left px-4 py-2 text-xs text-gray-700 hover:bg-gray-100 flex items-center gap-2">
+                      <LogOut className="h-3.5 w-3.5" />Sign Out
                     </button>
-                    <div
-                      className="absolute left-0 mt-1 w-64 bg-white rounded-lg shadow-lg border border-gray-200 py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 z-50"
-                      onMouseLeave={() => setActiveDropdown(null)}
-                    >
-                      {item.submenu.map((subItem) => (
-                        <Link
-                          key={subItem.name}
-                          to={subItem.href}
-                          className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-200"
-                        >
-                          {subItem.name}
-                        </Link>
-                      ))}
-                    </div>
                   </div>
+                )}
+              </div>
+            ) : (
+              <Link to="/auth" className="bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-800 transition-colors">
+                Sign In
+              </Link>
+            )}
+          </div>
+
+          {/* Mobile menu button */}
+          <button
+            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            className="lg:hidden p-2 rounded-lg text-gray-700 hover:bg-gray-100"
+          >
+            {isMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </button>
+        </div>
+      </div>
+
+      {/* Desktop Navigation Row */}
+      <div className="hidden lg:block border-t border-gray-100 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex items-center">
+            {navigation.map((item) => (
+              <div
+                key={item.name}
+                className="relative"
+                onMouseEnter={() => item.submenu && openDropdown(item.name)}
+                onMouseLeave={() => item.submenu && closeDropdown()}
+              >
+                {item.submenu ? (
+                  <>
+                    <Link
+                      to={item.href}
+                      className={`flex items-center gap-0.5 px-2.5 py-2.5 text-xs font-semibold tracking-wide transition-colors whitespace-nowrap border-b-2 ${
+                        isActive(item.href)
+                          ? 'text-blue-700 border-blue-700'
+                          : 'text-gray-600 border-transparent hover:text-blue-700 hover:border-blue-400'
+                      }`}
+                    >
+                      {item.name}
+                      <ChevronDown className="h-3 w-3 mt-px" />
+                    </Link>
+                    {activeDropdown === item.name && (
+                      <div
+                        className="absolute left-0 top-full mt-0 w-52 bg-white rounded-b-lg shadow-xl border border-gray-200 py-1 z-50"
+                        onMouseEnter={() => openDropdown(item.name)}
+                        onMouseLeave={() => closeDropdown()}
+                      >
+                        {item.submenu.map((sub) => (
+                          <Link
+                            key={sub.name}
+                            to={sub.href}
+                            className="block px-4 py-2 text-xs text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors"
+                          >
+                            {sub.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </>
                 ) : (
                   <Link
                     to={item.href}
-                    className={`px-3 py-2 text-sm font-medium transition-colors duration-200 rounded-lg ${
+                    className={`flex items-center px-2.5 py-2.5 text-xs font-semibold tracking-wide transition-colors whitespace-nowrap border-b-2 ${
                       isActive(item.href)
-                        ? 'text-blue-700 bg-blue-50'
-                        : 'text-gray-700 hover:text-blue-700 hover:bg-gray-50'
+                        ? 'text-blue-700 border-blue-700'
+                        : 'text-gray-600 border-transparent hover:text-blue-700 hover:border-blue-400'
                     }`}
                   >
                     {item.name}
@@ -178,175 +239,74 @@ const Header: React.FC = () => {
               </div>
             ))}
           </nav>
-
-          {/* Action Buttons */}
-          <div className="hidden lg:flex items-center space-x-4">
-            <Link
-              to="/submit-listing"
-              className="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-2"
-            >
-              <Plus className="h-4 w-4" />
-              <span>Submit Listing</span>
-            </Link>
-            
-            {user ? (
-              <div className="relative">
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="flex items-center space-x-2 text-gray-700 hover:text-blue-700 transition-colors duration-200 px-3 py-2 rounded-lg hover:bg-gray-50"
-                >
-                  <User className="h-5 w-5" />
-                  <span className="text-sm font-medium">{user.firstName}</span>
-                  <ChevronDown className="h-4 w-4" />
-                </button>
-                {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
-                    {user.userType === 'admin' && (
-                      <Link
-                        to="/admin"
-                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        Admin Dashboard
-                      </Link>
-                    )}
-                    <Link
-                      to="/profile"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      My Profile
-                    </Link>
-                    <Link
-                      to="/my-listings"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      My Listings
-                    </Link>
-                    <button
-                      onClick={handleSignOut}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200 flex items-center space-x-2"
-                    >
-                      <LogOut className="h-4 w-4" />
-                      <span>Sign Out</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <Link
-                to="/auth"
-                className="bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-800 transition-colors duration-200"
-              >
-                Sign In / Register
-              </Link>
-            )}
-          </div>
-
-          {/* Mobile menu button */}
-          <button
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden p-2 rounded-lg text-gray-700 hover:text-blue-700 hover:bg-gray-100 transition-colors duration-200"
-          >
-            {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-          </button>
         </div>
+      </div>
 
-        {/* Mobile Navigation */}
-        {isMenuOpen && (
-          <div className="lg:hidden py-4 border-t border-gray-200">
-            <nav className="flex flex-col space-y-2">
-              {navigation.map((item) => (
-                <div key={item.name}>
-                  {item.submenu ? (
-                    <div>
-                      <button
-                        onClick={() => handleDropdownToggle(item.name)}
-                        className="w-full flex items-center justify-between px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                      >
-                        <span>{item.name}</span>
-                        <ChevronDown className={`h-4 w-4 transform transition-transform duration-200 ${
-                          activeDropdown === item.name ? 'rotate-180' : ''
-                        }`} />
-                      </button>
-                      {activeDropdown === item.name && (
-                        <div className="ml-4 mt-2 space-y-1">
-                          {item.submenu.map((subItem) => (
-                            <Link
-                              key={subItem.name}
-                              to={subItem.href}
-                              className="block px-3 py-2 text-sm text-gray-600 hover:text-blue-700 hover:bg-gray-50 rounded-lg transition-colors duration-200"
-                              onClick={() => setIsMenuOpen(false)}
-                            >
-                              {subItem.name}
-                            </Link>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <Link
-                      to={item.href}
-                      className={`px-3 py-2 text-base font-medium rounded-lg transition-colors duration-200 ${
-                        isActive(item.href)
-                          ? 'text-blue-700 bg-blue-50'
-                          : 'text-gray-700 hover:text-blue-700 hover:bg-gray-100'
-                      }`}
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {item.name}
-                    </Link>
-                  )}
-                </div>
-              ))}
-              
-              <div className="pt-4 border-t border-gray-200 space-y-2">
-                <Link
-                  to="/submit-listing"
-                  className="mx-3 bg-orange-600 text-white px-4 py-2 rounded-lg text-base font-medium hover:bg-orange-700 transition-colors duration-200 text-center block"
-                  onClick={() => setIsMenuOpen(false)}
-                >
-                  SUBMIT LISTING
-                </Link>
-                
-                {user ? (
-                  <>
-                    <Link
-                      to="/admin"
-                      className="px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      Admin Dashboard
-                    </Link>
-                    <Link
-                      to="/profile"
-                      className="px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      My Profile
-                    </Link>
+      {/* Mobile Navigation */}
+      {isMenuOpen && (
+        <div className="lg:hidden border-t border-gray-200 bg-white">
+          <nav className="flex flex-col py-2">
+            {navigation.map((item) => (
+              <div key={item.name}>
+                {item.submenu ? (
+                  <div>
                     <button
-                      onClick={handleSignOut}
-                      className="text-left px-3 py-2 text-base font-medium text-gray-700 hover:text-blue-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                      onClick={() => setActiveDropdown(activeDropdown === item.name ? null : item.name)}
+                      className="w-full flex items-center justify-between px-4 py-2.5 text-sm font-semibold text-gray-700 hover:bg-gray-50"
                     >
-                      Sign Out
+                      <span>{item.name}</span>
+                      <ChevronDown className={`h-4 w-4 transition-transform ${activeDropdown === item.name ? 'rotate-180' : ''}`} />
                     </button>
-                  </>
+                    {activeDropdown === item.name && (
+                      <div className="bg-gray-50 border-t border-gray-100">
+                        {item.submenu.map((sub) => (
+                          <Link
+                            key={sub.name}
+                            to={sub.href}
+                            className="block pl-8 pr-4 py-2 text-sm text-gray-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={() => { setIsMenuOpen(false); setActiveDropdown(null); }}
+                          >
+                            {sub.name}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 ) : (
                   <Link
-                    to="/auth"
-                    className="mx-3 mt-2 bg-blue-700 text-white px-4 py-2 rounded-lg text-base font-medium hover:bg-blue-800 transition-colors duration-200 text-center block"
-                    onClick={() => setIsMenuOpen(false)}
+                    to={item.href}
+                    className={`block px-4 py-2.5 text-sm font-semibold ${isActive(item.href) ? 'text-blue-700 bg-blue-50' : 'text-gray-700 hover:bg-gray-50 hover:text-blue-700'}`}
+                    onClick={() => { setIsMenuOpen(false); setActiveDropdown(null); }}
                   >
-                    SIGN IN / REGISTER
+                    {item.name}
                   </Link>
                 )}
               </div>
-            </nav>
-          </div>
-        )}
-      </div>
+            ))}
+            <div className="mt-2 pt-3 border-t border-gray-200 px-4 flex flex-col gap-2">
+              <Link to="/submit-listing" className="bg-orange-600 text-white text-center py-2 rounded-lg text-sm font-semibold" onClick={() => setIsMenuOpen(false)}>
+                Submit Listing
+              </Link>
+              {user ? (
+                <>
+                  {user.userType === 'admin' && (
+                    <Link to="/admin" className="text-center py-2 rounded-lg text-sm font-semibold text-gray-700 bg-gray-100" onClick={() => setIsMenuOpen(false)}>
+                      Admin Dashboard
+                    </Link>
+                  )}
+                  <button onClick={() => { handleSignOut(); setIsMenuOpen(false); }} className="text-center py-2 rounded-lg text-sm font-semibold text-red-600 bg-red-50">
+                    Sign Out
+                  </button>
+                </>
+              ) : (
+                <Link to="/auth" className="bg-blue-700 text-white text-center py-2 rounded-lg text-sm font-semibold" onClick={() => setIsMenuOpen(false)}>
+                  Sign In / Register
+                </Link>
+              )}
+            </div>
+          </nav>
+        </div>
+      )}
     </header>
   );
 };

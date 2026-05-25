@@ -1,114 +1,88 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { Calendar, User, ArrowRight, Clock } from 'lucide-react';
+import { Calendar, User, ArrowRight, Clock, Eye } from 'lucide-react';
 
 const FeaturedArticles: React.FC = () => {
-  const featuredArticles = [
-    {
-      id: '1',
-      title: 'Sustainable Building Materials: The Future of Construction',
-      excerpt: 'Explore how eco-friendly materials are revolutionizing the construction industry and contributing to a greener future.',
-      category: 'Materials',
-      author: 'Dr. Sarah Johnson',
-      date: '2024-01-15',
-      readTime: '8 min read',
-      image: 'https://images.pexels.com/photos/416917/pexels-photo-416917.jpeg?auto=compress&cs=tinysrgb&w=800'
-    },
-    {
-      id: '2',
-      title: 'Modern Architecture Trends Shaping Urban Development',
-      excerpt: 'Discover the latest architectural trends that are defining the skylines of tomorrow\'s cities.',
-      category: 'Architecture',
-      author: 'Michael Chen',
-      date: '2024-01-12',
-      readTime: '6 min read',
-      image: 'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=800'
-    },
-    {
-      id: '3',
-      title: 'Government Housing Policies: What Builders Need to Know',
-      excerpt: 'Understanding the latest regulatory changes and their impact on construction projects.',
-      category: 'Policy',
-      author: 'Emma Rodriguez',
-      date: '2024-01-10',
-      readTime: '12 min read',
-      image: 'https://images.pexels.com/photos/210617/pexels-photo-210617.jpeg?auto=compress&cs=tinysrgb&w=800'
-    }
-  ];
+  const [articles, setArticles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/articles?featured=true&limit=6')
+      .then(r => r.json())
+      .then(data => { if (Array.isArray(data)) setArticles(data); })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
+
+  if (loading) return (
+    <section className="py-6">
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600" />
+      </div>
+    </section>
+  );
+
+  if (!articles.length) return null;
 
   return (
-    <section className="py-8">
-      <div className="text-center mb-8">
-        <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-          Featured Articles
-        </h2>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-          Stay informed with the latest insights from construction industry experts
-        </p>
+    <section className="py-6">
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Featured Articles</h2>
+          <p className="text-sm text-gray-500 mt-1">Expert insights from Kenya's construction industry</p>
+        </div>
+        <Link to="/articles" className="text-sm text-blue-700 hover:text-blue-800 font-medium flex items-center gap-1">
+          View All <ArrowRight className="h-4 w-4" />
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {featuredArticles.map((article) => (
-          <article
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+        {articles.map((article) => (
+          <Link
             key={article.id}
-            className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group"
+            to={`/article/${article.id}`}
+            className="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300 group flex flex-col"
           >
             <div className="relative overflow-hidden">
               <img
-                src={article.image}
+                src={article.featuredImage || 'https://images.pexels.com/photos/416917/pexels-photo-416917.jpeg?auto=compress&cs=tinysrgb&w=800'}
                 alt={article.title}
-                className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-44 object-cover group-hover:scale-105 transition-transform duration-300"
               />
-              <div className="absolute top-4 left-4">
-                <span className="bg-blue-700 text-white px-3 py-1 rounded-full text-sm font-medium">
+              <div className="absolute top-3 left-3">
+                <span className="bg-blue-700 text-white px-2.5 py-0.5 rounded-full text-xs font-semibold">
                   {article.category}
                 </span>
               </div>
+              {article.featured && (
+                <div className="absolute top-3 right-3">
+                  <span className="bg-orange-600 text-white px-2.5 py-0.5 rounded-full text-xs font-semibold">Featured</span>
+                </div>
+              )}
             </div>
-            
-            <div className="p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-700 transition-colors duration-200">
+
+            <div className="p-5 flex flex-col flex-1">
+              <h3 className="text-base font-bold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-700 transition-colors leading-snug">
                 {article.title}
               </h3>
-              <p className="text-gray-600 mb-4 line-clamp-3">
-                {article.excerpt}
-              </p>
-              
-              <div className="flex items-center text-sm text-gray-500 mb-4 space-x-4">
-                <div className="flex items-center space-x-1">
-                  <User className="h-4 w-4" />
-                  <span>{article.author}</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Calendar className="h-4 w-4" />
-                  <span>{new Date(article.date).toLocaleDateString()}</span>
-                </div>
-                <div className="flex items-center space-x-1">
-                  <Clock className="h-4 w-4" />
-                  <span>{article.readTime}</span>
-                </div>
-              </div>
-              
-              <Link
-                to={`/article/${article.id}`}
-                className="inline-flex items-center space-x-2 text-blue-700 hover:text-blue-800 font-medium transition-colors duration-200"
-              >
-                <span>Read More</span>
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </div>
-          </article>
-        ))}
-      </div>
+              <p className="text-sm text-gray-500 mb-3 line-clamp-2 flex-1">{article.excerpt}</p>
 
-      <div className="text-center mt-8">
-        <Link
-          to="/articles"
-          className="bg-blue-700 hover:bg-blue-800 text-white px-8 py-3 rounded-lg font-semibold transition-colors duration-200 inline-flex items-center space-x-2"
-        >
-          <span>View All Articles</span>
-          <ArrowRight className="h-5 w-5" />
-        </Link>
+              <div className="flex flex-wrap items-center text-xs text-gray-400 gap-2 mb-3">
+                <span className="flex items-center gap-1"><User className="h-3 w-3" />{article.author}</span>
+                <span className="flex items-center gap-1">
+                  <Calendar className="h-3 w-3" />
+                  {article.createdAt ? new Date(article.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}
+                </span>
+                {article.readTime && <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{article.readTime}</span>}
+                <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{(article.views || 0).toLocaleString()}</span>
+              </div>
+
+              <span className="inline-flex items-center gap-1.5 text-blue-700 text-xs font-semibold">
+                Read More <ArrowRight className="h-3.5 w-3.5" />
+              </span>
+            </div>
+          </Link>
+        ))}
       </div>
     </section>
   );
