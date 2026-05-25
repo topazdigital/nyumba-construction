@@ -87,6 +87,7 @@ const Header: React.FC = () => {
     },
     { name: 'EVENTS', href: '/events' },
     { name: 'FLIP COPY', href: '/flip-copy' },
+    { name: 'CONTACT', href: '/contact' },
   ];
 
   const isActive = (href: string) => location.pathname === href;

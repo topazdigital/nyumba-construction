@@ -102,13 +102,78 @@ const SubmitListing: React.FC = () => {
     setLoading(true);
 
     try {
-      // Here you would submit the data to your backend
-      console.log('Submitting listing:', { listingType, propertyData, professionalData, contractorData, supplierData, images });
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      alert('Listing submitted successfully! It will be reviewed by our team.');
+      let endpoint = '';
+      let payload: any = {};
+
+      if (listingType === 'property') {
+        endpoint = '/api/properties';
+        payload = { ...propertyData, price: propertyData.price, published: false, images: [] };
+      } else if (listingType === 'professional') {
+        endpoint = '/api/professionals';
+        payload = {
+          name: professionalData.name,
+          profession: professionalData.profession,
+          company: professionalData.company,
+          description: professionalData.description,
+          specialties: professionalData.specialties,
+          experienceYears: parseInt(professionalData.experience) || null,
+          hourlyRate: professionalData.hourlyRate || null,
+          certifications: professionalData.certifications,
+          contactPhone: professionalData.contactPhone,
+          contactEmail: professionalData.contactEmail,
+          website: professionalData.website,
+          published: false,
+          verified: false,
+        };
+      } else if (listingType === 'contractor') {
+        endpoint = '/api/contractors';
+        payload = {
+          name: contractorData.name,
+          company: contractorData.company,
+          contractorType: contractorData.contractorType,
+          description: contractorData.description,
+          services: contractorData.services,
+          licenseNumber: contractorData.licenseNumber,
+          experienceYears: parseInt(contractorData.experience) || null,
+          employees: parseInt(contractorData.employees) || null,
+          contactPhone: contractorData.contactPhone,
+          contactEmail: contractorData.contactEmail,
+          website: contractorData.website,
+          published: false,
+          verified: false,
+        };
+      } else if (listingType === 'supplier') {
+        endpoint = '/api/suppliers';
+        payload = {
+          companyName: supplierData.companyName,
+          contactPerson: supplierData.contactPerson,
+          categories: supplierData.categories,
+          products: supplierData.products,
+          description: supplierData.description,
+          establishedYear: parseInt(supplierData.established) || null,
+          employees: parseInt(supplierData.employees) || null,
+          deliveryRadius: parseInt(supplierData.deliveryRadius) || null,
+          minOrderAmount: supplierData.minOrder || null,
+          paymentTerms: supplierData.paymentTerms,
+          contactPhone: supplierData.contactPhone,
+          contactEmail: supplierData.contactEmail,
+          website: supplierData.website,
+          published: false,
+          verified: false,
+        };
+      }
+
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!res.ok) throw new Error('Submission failed');
+      alert('Listing submitted successfully! It will be reviewed by our team before going live.');
       navigate('/');
     } catch (error) {
       console.error('Error submitting listing:', error);

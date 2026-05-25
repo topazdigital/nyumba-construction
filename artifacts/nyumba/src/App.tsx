@@ -16,6 +16,10 @@ import Contractors from './pages/Contractors';
 import Materials from './pages/Materials';
 import AuthPage from './components/Auth/AuthPage';
 import AdminDashboard from './pages/admin/Dashboard';
+import Articles from './pages/Articles';
+import ArticleDetail from './pages/ArticleDetail';
+import Contact from './pages/Contact';
+import NotFound from './pages/not-found';
 
 // Professional Pages
 import Architects from './pages/professionals/Architects';
@@ -49,9 +53,14 @@ function App() {
               <Route path="/contractors/:category" element={<Contractors />} />
               <Route path="/materials" element={<Materials />} />
               <Route path="/materials/:category" element={<Materials />} />
+              <Route path="/articles" element={<Articles />} />
+              <Route path="/articles/:category" element={<Articles />} />
+              <Route path="/article/:id" element={<ArticleDetail />} />
+              <Route path="/contact" element={<Contact />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/submit-listing" element={<SubmitListing />} />
+              <Route path="*" element={<NotFound />} />
             </Routes>
           </main>
           <Footer />

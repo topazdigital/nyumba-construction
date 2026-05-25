@@ -1,94 +1,38 @@
-import React, { useState } from 'react';
-import { Search, Filter, Calendar, User, Clock, ArrowRight } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Search, Filter, Calendar, User, Clock, ArrowRight, Eye } from 'lucide-react';
 
 const Articles: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+  const [articles, setArticles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const categories = [
     { value: 'all', label: 'All Categories' },
-    { value: 'architecture', label: 'Architecture' },
-    { value: 'construction', label: 'Construction' },
-    { value: 'materials', label: 'Materials' },
-    { value: 'policy', label: 'Policy & Regulations' },
-    { value: 'interviews', label: 'Interviews' },
-    { value: 'technology', label: 'Technology' }
+    { value: 'Architecture', label: 'Architecture' },
+    { value: 'Construction', label: 'Construction' },
+    { value: 'Materials', label: 'Materials' },
+    { value: 'Policy & Regulations', label: 'Policy & Regulations' },
+    { value: 'Interviews', label: 'Interviews' },
+    { value: 'Technology', label: 'Technology' },
+    { value: 'Market Updates', label: 'Market Updates' },
+    { value: 'Sustainability', label: 'Sustainability' },
   ];
 
-  const articles = [
-    {
-      id: '1',
-      title: 'Sustainable Building Materials: The Future of Construction',
-      excerpt: 'Explore how eco-friendly materials are revolutionizing the construction industry and contributing to a greener future with innovative solutions.',
-      category: 'Materials',
-      author: 'Dr. Sarah Johnson',
-      date: '2024-01-15',
-      readTime: '8 min read',
-      image: 'https://images.pexels.com/photos/416917/pexels-photo-416917.jpeg?auto=compress&cs=tinysrgb&w=800',
-      featured: true
-    },
-    {
-      id: '2',
-      title: 'Modern Architecture Trends Shaping Urban Development',
-      excerpt: 'Discover the latest architectural trends that are defining the skylines of tomorrow\'s cities and transforming urban landscapes.',
-      category: 'Architecture',
-      author: 'Michael Chen',
-      date: '2024-01-12',
-      readTime: '6 min read',
-      image: 'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=800',
-      featured: true
-    },
-    {
-      id: '3',
-      title: 'Government Housing Policies: What Builders Need to Know',
-      excerpt: 'Understanding the latest regulatory changes and their impact on construction projects, permits, and compliance requirements.',
-      category: 'Policy',
-      author: 'Emma Rodriguez',
-      date: '2024-01-10',
-      readTime: '12 min read',
-      image: 'https://images.pexels.com/photos/210617/pexels-photo-210617.jpeg?auto=compress&cs=tinysrgb&w=800',
-      featured: false
-    },
-    {
-      id: '4',
-      title: 'Smart Construction: IoT and Building Automation',
-      excerpt: 'How Internet of Things technology is transforming construction sites and building management systems.',
-      category: 'Technology',
-      author: 'James Wilson',
-      date: '2024-01-08',
-      readTime: '10 min read',
-      image: 'https://images.pexels.com/photos/159306/construction-site-build-construction-work-159306.jpeg?auto=compress&cs=tinysrgb&w=800',
-      featured: false
-    },
-    {
-      id: '5',
-      title: 'Interview: Leading Architect Discusses Sustainable Design',
-      excerpt: 'An exclusive conversation with renowned architect Maria Santos about the future of sustainable architecture.',
-      category: 'Interviews',
-      author: 'David Park',
-      date: '2024-01-05',
-      readTime: '15 min read',
-      image: 'https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=800',
-      featured: false
-    },
-    {
-      id: '6',
-      title: 'Construction Safety: New Standards and Best Practices',
-      excerpt: 'A comprehensive guide to the latest safety regulations and best practices for construction sites.',
-      category: 'Construction',
-      author: 'Robert Kim',
-      date: '2024-01-03',
-      readTime: '9 min read',
-      image: 'https://images.pexels.com/photos/1216564/pexels-photo-1216564.jpeg?auto=compress&cs=tinysrgb&w=800',
-      featured: false
-    }
-  ];
+  useEffect(() => {
+    fetch('/api/articles?limit=50')
+      .then(r => r.json())
+      .then(data => { setArticles(Array.isArray(data) ? data : []); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, []);
 
   const filteredArticles = articles.filter(article => {
-    const matchesSearch = article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         article.excerpt.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesCategory = selectedCategory === 'all' || 
-                           article.category.toLowerCase() === selectedCategory;
+    const matchesSearch = !searchTerm ||
+      article.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (article.excerpt || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesCategory = selectedCategory === 'all' ||
+      article.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
 
@@ -98,10 +42,10 @@ const Articles: React.FC = () => {
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            Industry Articles & Insights
+            Industry Articles &amp; Insights
           </h1>
           <p className="text-xl text-gray-600 max-w-2xl">
-            Stay informed with the latest news, trends, and expert insights from the construction industry
+            Stay informed with the latest news, trends, and expert insights from Kenya's construction industry
           </p>
         </div>
       </div>
@@ -116,8 +60,8 @@ const Articles: React.FC = () => {
                 type="text"
                 placeholder="Search articles..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                onChange={e => setSearchTerm(e.target.value)}
+                className="pl-10 w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
@@ -125,14 +69,10 @@ const Articles: React.FC = () => {
             <Filter className="h-5 w-5 text-gray-400" />
             <select
               value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              onChange={e => setSelectedCategory(e.target.value)}
+              className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              {categories.map(category => (
-                <option key={category.value} value={category.value}>
-                  {category.label}
-                </option>
-              ))}
+              {categories.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
             </select>
           </div>
         </div>
@@ -140,65 +80,66 @@ const Articles: React.FC = () => {
 
       {/* Articles Grid */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {filteredArticles.map((article) => (
-            <article
-              key={article.id}
-              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group"
-            >
-              <div className="relative overflow-hidden">
-                <img
-                  src={article.image}
-                  alt={article.title}
-                  className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute top-4 left-4">
-                  <span className="bg-blue-700 text-white px-3 py-1 rounded-full text-sm font-medium">
-                    {article.category}
-                  </span>
-                </div>
-                {article.featured && (
-                  <div className="absolute top-4 right-4">
-                    <span className="bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-medium">
-                      Featured
+        {loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {filteredArticles.map(article => (
+              <article
+                key={article.id}
+                className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 group"
+              >
+                <div className="relative overflow-hidden">
+                  <img
+                    src={article.featuredImage || 'https://images.pexels.com/photos/106399/pexels-photo-106399.jpeg?auto=compress&cs=tinysrgb&w=800'}
+                    alt={article.title}
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-300"
+                  />
+                  <div className="absolute top-4 left-4">
+                    <span className="bg-blue-700 text-white px-3 py-1 rounded-full text-sm font-medium">
+                      {article.category}
                     </span>
                   </div>
-                )}
-              </div>
-              
-              <div className="p-6">
-                <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-700 transition-colors duration-200">
-                  {article.title}
-                </h3>
-                <p className="text-gray-600 mb-4 line-clamp-3">
-                  {article.excerpt}
-                </p>
-                
-                <div className="flex items-center text-sm text-gray-500 mb-4 space-x-4">
-                  <div className="flex items-center space-x-1">
-                    <User className="h-4 w-4" />
-                    <span>{article.author}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Calendar className="h-4 w-4" />
-                    <span>{new Date(article.date).toLocaleDateString()}</span>
-                  </div>
-                  <div className="flex items-center space-x-1">
-                    <Clock className="h-4 w-4" />
-                    <span>{article.readTime}</span>
-                  </div>
+                  {article.featured && (
+                    <div className="absolute top-4 right-4">
+                      <span className="bg-orange-600 text-white px-3 py-1 rounded-full text-sm font-medium">
+                        Featured
+                      </span>
+                    </div>
+                  )}
                 </div>
-                
-                <button className="inline-flex items-center space-x-2 text-blue-700 hover:text-blue-800 font-medium transition-colors duration-200">
-                  <span>Read More</span>
-                  <ArrowRight className="h-4 w-4" />
-                </button>
-              </div>
-            </article>
-          ))}
-        </div>
 
-        {filteredArticles.length === 0 && (
+                <div className="p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2 group-hover:text-blue-700 transition-colors duration-200">
+                    {article.title}
+                  </h3>
+                  <p className="text-gray-600 mb-4 line-clamp-3">
+                    {article.excerpt}
+                  </p>
+
+                  <div className="flex flex-wrap items-center text-sm text-gray-500 mb-4 gap-3">
+                    <span className="flex items-center gap-1"><User className="h-4 w-4" />{article.author}</span>
+                    <span className="flex items-center gap-1"><Calendar className="h-4 w-4" />{article.createdAt ? new Date(article.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : ''}</span>
+                    {article.readTime && <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{article.readTime}</span>}
+                    <span className="flex items-center gap-1"><Eye className="h-4 w-4" />{(article.views || 0).toLocaleString()}</span>
+                  </div>
+
+                  <Link
+                    to={`/article/${article.id}`}
+                    className="inline-flex items-center space-x-2 text-blue-700 hover:text-blue-800 font-medium transition-colors duration-200"
+                  >
+                    <span>Read More</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </article>
+            ))}
+          </div>
+        )}
+
+        {!loading && filteredArticles.length === 0 && (
           <div className="text-center py-16">
             <div className="text-gray-400 mb-4">
               <Search className="h-16 w-16 mx-auto" />
