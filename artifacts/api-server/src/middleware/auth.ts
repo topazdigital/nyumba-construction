@@ -42,3 +42,18 @@ export function requireAdmin(req: AuthRequest, res: Response, next: NextFunction
 }
 
 export { EFFECTIVE_SECRET as JWT_SECRET_RESOLVED };
+
+// Sets req.user if a valid Bearer token is present; does not block if absent
+export function optionalAuth(req: AuthRequest, res: Response, next: NextFunction) {
+  const authHeader = req.headers.authorization;
+  if (authHeader?.startsWith("Bearer ")) {
+    const token = authHeader.slice(7);
+    try {
+      const decoded = jwt.verify(token, EFFECTIVE_SECRET) as { userId: number; email: string; userType: string };
+      req.user = decoded;
+    } catch {
+      // invalid token — treat as anonymous
+    }
+  }
+  next();
+}

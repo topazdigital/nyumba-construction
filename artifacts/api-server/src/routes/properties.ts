@@ -1,22 +1,25 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { propertiesTable } from "@workspace/db";
-import { eq, desc, ilike, or, sql } from "drizzle-orm";
-import { requireAuth, requireAdmin } from "../middleware/auth";
+import { eq, desc, ilike, or, and } from "drizzle-orm";
+import { requireAuth, requireAdmin, optionalAuth, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
-router.get("/properties", async (req, res) => {
+router.get("/properties", optionalAuth, async (req: AuthRequest, res) => {
   try {
-    const { type, location, search, featured, published = "true", limit = "20", offset = "0" } = req.query as Record<string, string>;
+    const isAdmin = req.user?.userType === "admin";
+    const { type, location, search, featured, published, limit = "20", offset = "0" } = req.query as Record<string, string>;
     const conditions: any[] = [];
-    if (published === "true") conditions.push(eq(propertiesTable.published, true));
+    if (!isAdmin || published !== "false") {
+      conditions.push(eq(propertiesTable.published, true));
+    }
     if (featured === "true") conditions.push(eq(propertiesTable.featured, true));
     if (type && type !== "all") conditions.push(eq(propertiesTable.propertyType, type));
     if (location && location !== "all") conditions.push(ilike(propertiesTable.location, `%${location}%`));
     if (search) conditions.push(or(ilike(propertiesTable.title, `%${search}%`), ilike(propertiesTable.location, `%${search}%`)));
     const properties = await db.select().from(propertiesTable)
-      .where(conditions.length > 0 ? sql`${conditions.reduce((a, b) => sql`${a} AND ${b}`)}` : undefined)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(propertiesTable.createdAt))
       .limit(parseInt(limit))
       .offset(parseInt(offset));
@@ -24,10 +27,12 @@ router.get("/properties", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.get("/properties/:id", async (req, res) => {
+router.get("/properties/:id", optionalAuth, async (req: AuthRequest, res) => {
   try {
+    const isAdmin = req.user?.userType === "admin";
     const [property] = await db.select().from(propertiesTable).where(eq(propertiesTable.id, parseInt(req.params.id))).limit(1);
     if (!property) return res.status(404).json({ error: "Not found" });
+    if (!property.published && !isAdmin) return res.status(404).json({ error: "Not found" });
     await db.update(propertiesTable).set({ views: (property.views || 0) + 1 }).where(eq(propertiesTable.id, property.id));
     res.json({ ...property, views: (property.views || 0) + 1 });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }

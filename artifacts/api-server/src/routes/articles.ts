@@ -1,21 +1,25 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { articlesTable } from "@workspace/db";
-import { eq, desc, ilike, or, sql } from "drizzle-orm";
-import { requireAdmin } from "../middleware/auth";
+import { eq, desc, ilike, or, sql, and } from "drizzle-orm";
+import { requireAdmin, optionalAuth, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
-router.get("/articles", async (req, res) => {
+router.get("/articles", optionalAuth, async (req: AuthRequest, res) => {
   try {
-    const { category, search, featured, published = "true", limit = "20", offset = "0" } = req.query as Record<string, string>;
+    const isAdmin = req.user?.userType === "admin";
+    const { category, search, featured, published, limit = "20", offset = "0" } = req.query as Record<string, string>;
     const conditions: any[] = [];
-    if (published === "true") conditions.push(eq(articlesTable.published, true));
+    // Non-admins always get published=true only; admins respect the query param
+    if (!isAdmin || published !== "false") {
+      conditions.push(eq(articlesTable.published, true));
+    }
     if (featured === "true") conditions.push(eq(articlesTable.featured, true));
     if (category && category !== "all") conditions.push(eq(articlesTable.category, category));
     if (search) conditions.push(or(ilike(articlesTable.title, `%${search}%`), ilike(articlesTable.excerpt, `%${search}%`)));
     const articles = await db.select().from(articlesTable)
-      .where(conditions.length > 0 ? sql`${conditions.reduce((a, b) => sql`${a} AND ${b}`)}` : undefined)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(articlesTable.createdAt))
       .limit(parseInt(limit))
       .offset(parseInt(offset));
@@ -23,10 +27,12 @@ router.get("/articles", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.get("/articles/:id", async (req, res) => {
+router.get("/articles/:id", optionalAuth, async (req: AuthRequest, res) => {
   try {
+    const isAdmin = req.user?.userType === "admin";
     const [article] = await db.select().from(articlesTable).where(eq(articlesTable.id, parseInt(req.params.id))).limit(1);
     if (!article) return res.status(404).json({ error: "Not found" });
+    if (!article.published && !isAdmin) return res.status(404).json({ error: "Not found" });
     await db.update(articlesTable).set({ views: (article.views || 0) + 1 }).where(eq(articlesTable.id, article.id));
     res.json({ ...article, views: (article.views || 0) + 1 });
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }

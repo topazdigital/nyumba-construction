@@ -1,20 +1,24 @@
 import { Router } from "express";
 import { db } from "@workspace/db";
 import { suppliersTable } from "@workspace/db";
-import { eq, desc, ilike, or, sql } from "drizzle-orm";
-import { requireAuth, requireAdmin } from "../middleware/auth";
+import { eq, desc, ilike, or, and } from "drizzle-orm";
+import { requireAuth, requireAdmin, optionalAuth, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
-router.get("/suppliers", async (req, res) => {
+router.get("/suppliers", optionalAuth, async (req: AuthRequest, res) => {
   try {
-    const { category, location, search, published = "true", limit = "20", offset = "0" } = req.query as Record<string, string>;
+    const isAdmin = req.user?.userType === "admin";
+    const { category, location, search, published, limit = "20", offset = "0" } = req.query as Record<string, string>;
     const conditions: any[] = [];
-    if (published === "true") conditions.push(eq(suppliersTable.published, true));
+    if (!isAdmin || published !== "false") {
+      conditions.push(eq(suppliersTable.published, true));
+    }
+    if (category && category !== "all") conditions.push(ilike(suppliersTable.categories, `%${category}%`));
     if (location && location !== "all") conditions.push(ilike(suppliersTable.location, `%${location}%`));
     if (search) conditions.push(or(ilike(suppliersTable.companyName, `%${search}%`), ilike(suppliersTable.contactPerson, `%${search}%`)));
     const suppliers = await db.select().from(suppliersTable)
-      .where(conditions.length > 0 ? sql`${conditions.reduce((a, b) => sql`${a} AND ${b}`)}` : undefined)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(suppliersTable.createdAt))
       .limit(parseInt(limit))
       .offset(parseInt(offset));
@@ -22,10 +26,12 @@ router.get("/suppliers", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.get("/suppliers/:id", async (req, res) => {
+router.get("/suppliers/:id", optionalAuth, async (req: AuthRequest, res) => {
   try {
+    const isAdmin = req.user?.userType === "admin";
     const [s] = await db.select().from(suppliersTable).where(eq(suppliersTable.id, parseInt(req.params.id))).limit(1);
     if (!s) return res.status(404).json({ error: "Not found" });
+    if (!s.published && !isAdmin) return res.status(404).json({ error: "Not found" });
     res.json(s);
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
