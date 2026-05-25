@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, TrendingUp, Users, Building, Clock, Calendar, User, Eye } from 'lucide-react';
+import { API_BASE } from '../../lib/api';
 
 const MagazineHero: React.FC = () => {
   const [articles, setArticles] = useState<any[]>([]);
@@ -8,13 +9,13 @@ const MagazineHero: React.FC = () => {
   const [stats, setStats] = useState({ articles: 45, properties: 128, professionals: 89, suppliers: 156 });
 
   useEffect(() => {
-    fetch('/api/articles?limit=6&published=true')
+    fetch(`${API_BASE}/api/articles?limit=6&published=true`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setArticles(data); })
       .catch(() => {})
       .finally(() => setLoading(false));
 
-    fetch('/api/admin/stats').then(r => r.json()).then(d => {
+    fetch(`${API_BASE}/api/admin/stats`).then(r => r.json()).then(d => {
       if (d && typeof d === 'object') setStats(s => ({ ...s, ...d }));
     }).catch(() => {});
   }, []);

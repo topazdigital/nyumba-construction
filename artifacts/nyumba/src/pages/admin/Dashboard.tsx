@@ -6,7 +6,8 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
-const API = '/api';
+import { API_BASE } from '../../lib/api';
+const API = `${API_BASE}/api`;
 const authHdrs = () => ({
   'Content-Type': 'application/json',
   'Authorization': `Bearer ${localStorage.getItem('authToken')}`,

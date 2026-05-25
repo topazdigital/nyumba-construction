@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ExternalLink, Download } from 'lucide-react';
+import { API_BASE } from '../../lib/api';
 
 const Sidebar: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [sliderItems, setSliderItems] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch('/api/slider')
+    fetch(`${API_BASE}/api/slider`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data) && data.length > 0) setSliderItems(data.filter((s: any) => s.active)); })
       .catch(() => {});

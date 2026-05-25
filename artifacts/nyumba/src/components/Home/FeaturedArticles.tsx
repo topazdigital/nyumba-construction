@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, User, ArrowRight, Clock, Eye } from 'lucide-react';
+import { API_BASE } from '../../lib/api';
 
 const FeaturedArticles: React.FC = () => {
   const [articles, setArticles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/articles?featured=true&limit=6')
+    fetch(`${API_BASE}/api/articles?featured=true&limit=6`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setArticles(data); })
       .catch(() => {})

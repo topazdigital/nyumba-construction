@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Building2, Mail, Phone, MapPin, Facebook, Twitter, Linkedin, Instagram, Send } from 'lucide-react';
+import { API_BASE } from '../../lib/api';
 
 const Footer: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -11,7 +12,7 @@ const Footer: React.FC = () => {
     if (!email) return;
     setSubStatus('loading');
     try {
-      const res = await fetch('/api/newsletter/subscribe', {
+      const res = await fetch(`${API_BASE}/api/newsletter/subscribe`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email }),

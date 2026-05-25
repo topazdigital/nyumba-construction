@@ -25,7 +25,24 @@ app.use(
     },
   }),
 );
-app.use(cors());
+const allowedOrigins = [
+  'https://nyumba.impact.co.ke',
+  'http://nyumba.impact.co.ke',
+  /\.replit\.dev$/,
+  /\.worf\.replit\.dev$/,
+  /^http:\/\/localhost(:\d+)?$/,
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin) return callback(null, true);
+    const allowed = allowedOrigins.some(o =>
+      typeof o === 'string' ? o === origin : o.test(origin)
+    );
+    callback(null, allowed);
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 

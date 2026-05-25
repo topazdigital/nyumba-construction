@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { API_BASE } from '../lib/api';
 import {
   ArrowLeft, Calendar, User, Clock, Eye, Share2,
   Facebook, Twitter, Copy, CheckCheck, MessageSquare,
@@ -65,15 +66,15 @@ const ArticleDetail: React.FC = () => {
     setComments([]);
     setSubmitStatus('idle');
 
-    fetch(`/api/articles/${id}`)
+    fetch(`${API_BASE}/api/articles/${id}`)
       .then(r => r.ok ? r.json() : Promise.reject())
       .then((data: Article) => {
         setArticle(data);
         setLoading(false);
-        fetch(`/api/articles?category=${encodeURIComponent(data.category)}&limit=4`)
+        fetch(`${API_BASE}/api/articles?category=${encodeURIComponent(data.category)}&limit=4`)
           .then(r => r.json())
           .then((all: Article[]) => setRelated(all.filter(a => a.id !== data.id).slice(0, 3)));
-        fetch(`/api/comments?articleId=${id}`)
+        fetch(`${API_BASE}/api/comments?articleId=${id}`)
           .then(r => r.json())
           .then(setComments)
           .catch(() => {});
@@ -103,7 +104,7 @@ const ArticleDetail: React.FC = () => {
     if (!id || !commentForm.name.trim() || !commentForm.email.trim() || !commentForm.body.trim()) return;
     setSubmitting(true);
     try {
-      const res = await fetch('/api/comments', {
+      const res = await fetch(`${API_BASE}/api/comments`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...commentForm, articleId: parseInt(id) }),

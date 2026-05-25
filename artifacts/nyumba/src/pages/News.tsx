@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Calendar, User, Clock, ArrowRight, TrendingUp, Eye, Filter } from 'lucide-react';
+import { API_BASE } from '../lib/api';
 
 const News: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -24,7 +25,7 @@ const News: React.FC = () => {
     if (selectedCategory !== 'all') params.set('category', selectedCategory);
     if (searchTerm) params.set('search', searchTerm);
     setLoading(true);
-    fetch(`/api/articles?${params}`)
+    fetch(`${API_BASE}/api/articles?${params}`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setArticles(data); })
       .catch(() => {})

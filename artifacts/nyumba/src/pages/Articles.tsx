@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { API_BASE } from '../lib/api';
 import { Search, Filter, Calendar, User, Clock, ArrowRight, Eye } from 'lucide-react';
 
 const Articles: React.FC = () => {
@@ -21,7 +22,7 @@ const Articles: React.FC = () => {
   ];
 
   useEffect(() => {
-    fetch('/api/articles?limit=50')
+    fetch(`${API_BASE}/api/articles?limit=50`)
       .then(r => r.json())
       .then(data => { setArticles(Array.isArray(data) ? data : []); setLoading(false); })
       .catch(() => setLoading(false));

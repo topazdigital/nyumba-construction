@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, MapPin, Bed, Bath, Square, Heart, ArrowRight, Phone, Mail, Filter } from 'lucide-react';
+import { API_BASE } from '../lib/api';
 
 const Properties: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -45,7 +46,7 @@ const Properties: React.FC = () => {
     if (searchTerm) params.set('search', searchTerm);
 
     setLoading(true);
-    fetch(`/api/properties?${params}`)
+    fetch(`${API_BASE}/api/properties?${params}`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setProperties(data); })
       .catch(() => {})

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Bed, Bath, Square, ArrowRight } from 'lucide-react';
+import { API_BASE } from '../../lib/api';
 
 const FeaturedProperties: React.FC = () => {
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/properties?featured=true&limit=3')
+    fetch(`${API_BASE}/api/properties?featured=true&limit=3`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data)) setProperties(data); })
       .catch(() => {})
