@@ -1,7 +1,11 @@
 # Nyumba Magazine — cPanel Deployment Guide
 
+> **Note — Two separate deployment targets:**
+> - **Replit (default runtime):** Uses PostgreSQL + Drizzle ORM. Follow the steps in `replit.md` (push schema → run seed → start workflows). The MySQL guide and `nyumba-mysql.sql` do NOT apply to the Replit environment.
+> - **cPanel / shared hosting:** Uses MySQL. Follow this guide and import `nyumba-mysql.sql`. The Drizzle schema in `lib/db/` does NOT apply here; you will need to adapt the API to use a MySQL driver.
+
 ## Overview
-This guide explains how to deploy the Nyumba Magazine website to a cPanel shared hosting server.
+This guide explains how to deploy the Nyumba Magazine website to a **cPanel shared hosting server** (e.g. Namecheap, Hostinger, Bluehost).
 
 The site has two parts:
 1. **Frontend** — a static React build (HTML/CSS/JS files)

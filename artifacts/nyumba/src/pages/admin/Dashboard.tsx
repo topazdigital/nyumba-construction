@@ -66,12 +66,12 @@ const AdminDashboard: React.FC = () => {
   const fetchAll = useCallback(async () => {
     try {
       const results = await Promise.allSettled([
-        fetch(`${API}/articles?published=false&limit=100`).then(r => r.json()),
-        fetch(`${API}/properties?published=false&limit=100`).then(r => r.json()),
-        fetch(`${API}/professionals?published=false&limit=100`).then(r => r.json()),
-        fetch(`${API}/contractors?published=false&limit=100`).then(r => r.json()),
-        fetch(`${API}/suppliers?published=false&limit=100`).then(r => r.json()),
-        fetch(`${API}/events?published=false&limit=100`).then(r => r.json()),
+        fetch(`${API}/articles?published=false&limit=100`, { headers: authHdrs() }).then(r => r.json()),
+        fetch(`${API}/properties?published=false&limit=100`, { headers: authHdrs() }).then(r => r.json()),
+        fetch(`${API}/professionals?published=false&limit=100`, { headers: authHdrs() }).then(r => r.json()),
+        fetch(`${API}/contractors?published=false&limit=100`, { headers: authHdrs() }).then(r => r.json()),
+        fetch(`${API}/suppliers?published=false&limit=100`, { headers: authHdrs() }).then(r => r.json()),
+        fetch(`${API}/events?published=false&limit=100`, { headers: authHdrs() }).then(r => r.json()),
         fetch(`${API}/messages`, { headers: authHdrs() }).then(r => r.json()),
         fetch(`${API}/slider`).then(r => r.json()),
         fetch(`${API}/admin/stats`, { headers: authHdrs() }).then(r => r.json()),
