@@ -3,6 +3,8 @@ modules = ["nodejs-24", "python-3.11"]
 [deployment]
 router = "application"
 deploymentTarget = "autoscale"
+run = ["bash", "-c", "PORT=8080 node --enable-source-maps artifacts/api-server/dist/index.mjs"]
+build = ["bash", "-c", "pnpm install && BASE_PATH=/ PORT=18977 pnpm --filter @workspace/nyumba run build && cp -r artifacts/nyumba/dist/public artifacts/api-server/dist/public && pnpm --filter @workspace/api-server run build"]
 
 [deployment.postBuild]
 args = ["pnpm", "store", "prune"]
