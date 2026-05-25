@@ -49,7 +49,7 @@ const AuthPage: React.FC = () => {
         if (formData.password !== formData.confirmPassword) {
           throw new Error('Passwords do not match');
         }
-        await signUp(formData.email, formData.password);
+        await signUp({ ...formData, userType });
         navigate('/');
       }
     } catch (err: any) {

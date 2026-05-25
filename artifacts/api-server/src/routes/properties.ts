@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { propertiesTable } from "@workspace/db";
 import { eq, desc, ilike, or, sql } from "drizzle-orm";
+import { requireAuth, requireAdmin } from "../middleware/auth";
 
 const router = Router();
 
@@ -32,14 +33,16 @@ router.get("/properties/:id", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.post("/properties", async (req, res) => {
+// POST: any authenticated user can submit a property listing
+router.post("/properties", requireAuth, async (req, res) => {
   try {
     const [property] = await db.insert(propertiesTable).values(req.body).returning();
     res.status(201).json(property);
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.put("/properties/:id", async (req, res) => {
+// PUT/DELETE: admin only
+router.put("/properties/:id", requireAdmin, async (req, res) => {
   try {
     const [property] = await db.update(propertiesTable).set({ ...req.body, updatedAt: new Date() }).where(eq(propertiesTable.id, parseInt(req.params.id))).returning();
     if (!property) return res.status(404).json({ error: "Not found" });
@@ -47,7 +50,7 @@ router.put("/properties/:id", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.delete("/properties/:id", async (req, res) => {
+router.delete("/properties/:id", requireAdmin, async (req, res) => {
   try {
     await db.delete(propertiesTable).where(eq(propertiesTable.id, parseInt(req.params.id)));
     res.json({ success: true });

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { suppliersTable } from "@workspace/db";
 import { eq, desc, ilike, or, sql } from "drizzle-orm";
+import { requireAuth, requireAdmin } from "../middleware/auth";
 
 const router = Router();
 
@@ -29,14 +30,16 @@ router.get("/suppliers/:id", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.post("/suppliers", async (req, res) => {
+// POST: any authenticated user can submit a supplier listing
+router.post("/suppliers", requireAuth, async (req, res) => {
   try {
     const [s] = await db.insert(suppliersTable).values(req.body).returning();
     res.status(201).json(s);
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.put("/suppliers/:id", async (req, res) => {
+// PUT/DELETE: admin only
+router.put("/suppliers/:id", requireAdmin, async (req, res) => {
   try {
     const [s] = await db.update(suppliersTable).set({ ...req.body, updatedAt: new Date() }).where(eq(suppliersTable.id, parseInt(req.params.id))).returning();
     if (!s) return res.status(404).json({ error: "Not found" });
@@ -44,7 +47,7 @@ router.put("/suppliers/:id", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.delete("/suppliers/:id", async (req, res) => {
+router.delete("/suppliers/:id", requireAdmin, async (req, res) => {
   try {
     await db.delete(suppliersTable).where(eq(suppliersTable.id, parseInt(req.params.id)));
     res.json({ success: true });

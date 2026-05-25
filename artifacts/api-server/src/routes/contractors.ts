@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { contractorsTable } from "@workspace/db";
 import { eq, desc, ilike, or, sql } from "drizzle-orm";
+import { requireAuth, requireAdmin } from "../middleware/auth";
 
 const router = Router();
 
@@ -30,14 +31,16 @@ router.get("/contractors/:id", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.post("/contractors", async (req, res) => {
+// POST: any authenticated user can submit a contractor listing
+router.post("/contractors", requireAuth, async (req, res) => {
   try {
     const [c] = await db.insert(contractorsTable).values(req.body).returning();
     res.status(201).json(c);
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.put("/contractors/:id", async (req, res) => {
+// PUT/DELETE: admin only
+router.put("/contractors/:id", requireAdmin, async (req, res) => {
   try {
     const [c] = await db.update(contractorsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(contractorsTable.id, parseInt(req.params.id))).returning();
     if (!c) return res.status(404).json({ error: "Not found" });
@@ -45,7 +48,7 @@ router.put("/contractors/:id", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.delete("/contractors/:id", async (req, res) => {
+router.delete("/contractors/:id", requireAdmin, async (req, res) => {
   try {
     await db.delete(contractorsTable).where(eq(contractorsTable.id, parseInt(req.params.id)));
     res.json({ success: true });

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { db } from "@workspace/db";
 import { professionalsTable } from "@workspace/db";
 import { eq, desc, ilike, or, sql } from "drizzle-orm";
+import { requireAuth, requireAdmin } from "../middleware/auth";
 
 const router = Router();
 
@@ -31,14 +32,16 @@ router.get("/professionals/:id", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.post("/professionals", async (req, res) => {
+// POST: any authenticated user can submit a professional profile
+router.post("/professionals", requireAuth, async (req, res) => {
   try {
     const [p] = await db.insert(professionalsTable).values(req.body).returning();
     res.status(201).json(p);
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.put("/professionals/:id", async (req, res) => {
+// PUT/DELETE: admin only
+router.put("/professionals/:id", requireAdmin, async (req, res) => {
   try {
     const [p] = await db.update(professionalsTable).set({ ...req.body, updatedAt: new Date() }).where(eq(professionalsTable.id, parseInt(req.params.id))).returning();
     if (!p) return res.status(404).json({ error: "Not found" });
@@ -46,7 +49,7 @@ router.put("/professionals/:id", async (req, res) => {
   } catch (err) { req.log.error(err); res.status(500).json({ error: "Server error" }); }
 });
 
-router.delete("/professionals/:id", async (req, res) => {
+router.delete("/professionals/:id", requireAdmin, async (req, res) => {
   try {
     await db.delete(professionalsTable).where(eq(professionalsTable.id, parseInt(req.params.id)));
     res.json({ success: true });

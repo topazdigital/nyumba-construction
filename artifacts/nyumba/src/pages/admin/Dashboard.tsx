@@ -60,7 +60,7 @@ const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     if (!user) { navigate('/auth'); return; }
-    if (user.role !== 'admin') { navigate('/'); }
+    if (user.userType !== 'admin') { navigate('/'); }
   }, [user, navigate]);
 
   const fetchAll = useCallback(async () => {

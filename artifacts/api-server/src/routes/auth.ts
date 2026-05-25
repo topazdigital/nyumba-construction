@@ -4,10 +4,9 @@ import jwt from "jsonwebtoken";
 import { db } from "@workspace/db";
 import { usersTable } from "@workspace/db";
 import { eq } from "drizzle-orm";
+import { JWT_SECRET_RESOLVED as JWT_SECRET } from "../middleware/auth";
 
 const router: IRouter = Router();
-
-const JWT_SECRET = process.env.JWT_SECRET || "nyumba-secret-key-change-in-production";
 
 router.post("/auth/signup", async (req, res) => {
   try {
