@@ -1,11 +1,25 @@
 import { db } from "./index";
 import {
   articlesTable, propertiesTable, professionalsTable, contractorsTable,
-  suppliersTable, eventsTable, messagesTable, siteSettingsTable, homepageSliderTable
+  suppliersTable, eventsTable, messagesTable, siteSettingsTable, homepageSliderTable,
+  usersTable
 } from "./schema";
+import bcrypt from "bcryptjs";
 
 async function seed() {
   console.log("Seeding database...");
+
+  // Admin user — upsert so re-running seed is safe
+  const adminPasswordHash = await bcrypt.hash("admin123", 10);
+  await db.insert(usersTable).values({
+    email: "admin@nyumba.co.ke",
+    passwordHash: adminPasswordHash,
+    firstName: "Admin",
+    lastName: "Nyumba",
+    userType: "admin",
+    verified: true,
+  }).onConflictDoNothing();
+  console.log("✓ Admin user seeded (admin@nyumba.co.ke / admin123)");
 
   // Articles
   await db.insert(articlesTable).values([

@@ -47,9 +47,24 @@ Kenya's premier construction industry magazine and property hub — connecting a
 - Admin: Dashboard for site management
 - Submit Listing: Property/professional listing submission
 
+## Admin bootstrap
+
+The seed script creates the default admin account:
+- Email: `admin@nyumba.co.ke`
+- Password: `admin123`
+
+To bootstrap a fresh environment:
+1. `pnpm --filter @workspace/db run push` — apply schema to Postgres
+2. `pnpm --filter @workspace/db run seed` — seed sample data + admin user
+3. Sign in at `/auth` with the admin credentials above
+4. Admin panel is at `/admin`
+
+Change the admin password via the Admin → Settings tab after first login.
+
 ## Gotchas
 
-- Default admin credentials: admin@nyumba.co.ke / admin123
-- The API backend uses PostgreSQL; the Replit DB must be provisioned
-- Run `pnpm --filter @workspace/db run push` after schema changes
+- Self-signup cannot create admin accounts (enforced server-side allowlist)
+- The API backend uses PostgreSQL (Replit auto-provisions `DATABASE_URL`)
+- Run `pnpm --filter @workspace/db run push` after any schema changes
 - Tailwind v3 (not v4) — do NOT use `@tailwindcss/vite` plugin
+- `JWT_SECRET` env var should be set as a Replit secret before deploying
