@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ExternalLink, Download } from 'lucide-react';
 import { API_BASE } from '../../lib/api';
+import AdBanner from './AdBanner';
 
 const Sidebar: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -17,18 +18,26 @@ const Sidebar: React.FC = () => {
   const items = sliderItems.length > 0 ? sliderItems : [
     {
       id: 1,
-      title: 'Construction Materials Catalog',
-      description: 'Complete guide to premium building materials',
+      title: 'Kenya Construction Cost Guide 2025',
+      description: 'Current rates for labour, materials & project planning in Kenya',
       imagePath: 'https://images.pexels.com/photos/1216589/pexels-photo-1216589.jpeg?auto=compress&cs=tinysrgb&w=400',
       fileType: 'pdf',
       filePath: '#',
     },
     {
       id: 2,
-      title: 'Modern Architecture Trends',
-      description: 'Latest architectural innovations in Kenya',
+      title: 'H1 2025 Property Market Report',
+      description: 'Nairobi, Mombasa & Kisumu residential price trends',
       imagePath: 'https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=400',
-      fileType: 'image',
+      fileType: 'pdf',
+      filePath: '#',
+    },
+    {
+      id: 3,
+      title: 'Green Building Standards in Kenya',
+      description: 'NCA & KEBS-aligned sustainability checklist for developers',
+      imagePath: 'https://images.pexels.com/photos/416917/pexels-photo-416917.jpeg?auto=compress&cs=tinysrgb&w=400',
+      fileType: 'pdf',
       filePath: '#',
     },
   ];
@@ -116,6 +125,9 @@ const Sidebar: React.FC = () => {
           ))}
         </div>
       </div>
+
+      {/* Advertisement Banner */}
+      <AdBanner />
 
       {/* Newsletter */}
       <div className="bg-gradient-to-br from-orange-600 to-orange-700 rounded-xl shadow-md p-4 text-white">

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Calendar, User, Clock, ArrowRight, TrendingUp, Eye, Filter } from 'lucide-react';
 import { API_BASE } from '../lib/api';
+import AdBanner from '../components/Home/AdBanner';
 
 const News: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -190,6 +191,8 @@ const News: React.FC = () => {
                 {trending.length === 0 && <p className="text-xs text-gray-400">No trending articles yet.</p>}
               </div>
             </div>
+
+            <AdBanner />
 
             <div className="bg-gradient-to-br from-blue-700 to-blue-800 rounded-xl shadow-md p-4 text-white">
               <h3 className="text-sm font-bold mb-1.5">Stay Updated</h3>

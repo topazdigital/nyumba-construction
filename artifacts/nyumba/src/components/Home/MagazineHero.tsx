@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ArrowRight, TrendingUp, Users, Building, Clock, Calendar, User, Eye } from 'lucide-react';
 import { API_BASE } from '../../lib/api';
+import AdBanner from './AdBanner';
 
 const MagazineHero: React.FC = () => {
   const [articles, setArticles] = useState<any[]>([]);
@@ -161,6 +162,9 @@ const MagazineHero: React.FC = () => {
                   </div>
                 </div>
               )}
+
+              {/* Advertisement Banner */}
+              <AdBanner />
 
               {/* Newsletter */}
               <div className="bg-gradient-to-br from-orange-600 to-orange-700 rounded-xl shadow-lg p-5 text-white">
