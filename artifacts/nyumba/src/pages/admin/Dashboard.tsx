@@ -6,6 +6,7 @@ import {
   Megaphone, Rss, Download, ToggleLeft, ToggleRight, CheckCircle, XCircle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import DigestPanel from './DigestPanel';
 
 import { API_BASE } from '../../lib/api';
 const API = `${API_BASE}/api`;
@@ -1033,6 +1034,9 @@ const AdminDashboard: React.FC = () => {
         {/* ── NEWSLETTER ── */}
         {activeTab === 'newsletter' && (
           <div className="space-y-5">
+            {/* Send Digest Panel */}
+            <DigestPanel api={API} authHdrs={authHdrs} subscriberCount={newsletterStats.active} />
+
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {[
                 { label: 'Total Subscribers', value: newsletterStats.total, color: 'bg-blue-500' },
