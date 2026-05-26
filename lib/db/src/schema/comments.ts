@@ -1,10 +1,10 @@
-import { pgTable, serial, integer, varchar, text, boolean, timestamp } from "drizzle-orm/pg-core";
+import { mysqlTable, int, varchar, text, boolean, timestamp } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const commentsTable = pgTable("comments", {
-  id: serial("id").primaryKey(),
-  articleId: integer("article_id").notNull(),
+export const commentsTable = mysqlTable("comments", {
+  id: int("id").autoincrement().primaryKey(),
+  articleId: int("article_id").notNull(),
   name: varchar("name", { length: 100 }).notNull(),
   email: varchar("email", { length: 255 }).notNull(),
   website: varchar("website", { length: 255 }),

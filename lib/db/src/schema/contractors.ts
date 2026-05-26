@@ -1,9 +1,9 @@
-import { pgTable, serial, varchar, text, boolean, integer, json, timestamp } from "drizzle-orm/pg-core";
+import { mysqlTable, int, varchar, text, boolean, json, timestamp } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const contractorsTable = pgTable("contractors", {
-  id: serial("id").primaryKey(),
+export const contractorsTable = mysqlTable("contractors", {
+  id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
   company: varchar("company", { length: 255 }).notNull(),
   contractorType: varchar("contractor_type", { length: 100 }).notNull(),
@@ -13,9 +13,9 @@ export const contractorsTable = pgTable("contractors", {
   licenseNumber: varchar("license_number", { length: 100 }),
   insurance: boolean("insurance").default(false),
   bond: boolean("bond").default(false),
-  employees: integer("employees"),
-  projectsCompleted: integer("projects_completed").default(0),
-  experienceYears: integer("experience_years"),
+  employees: int("employees"),
+  projectsCompleted: int("projects_completed").default(0),
+  experienceYears: int("experience_years"),
   image: varchar("image", { length: 500 }),
   contactPhone: varchar("contact_phone", { length: 20 }),
   contactEmail: varchar("contact_email", { length: 255 }),
@@ -23,7 +23,7 @@ export const contractorsTable = pgTable("contractors", {
   verified: boolean("verified").default(false),
   published: boolean("published").default(false),
   rating: varchar("rating", { length: 10 }).default("0"),
-  reviews: integer("reviews").default(0),
+  reviews: int("reviews").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

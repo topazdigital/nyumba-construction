@@ -16,13 +16,12 @@
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "catalog:",
     "drizzle-zod": "^0.8.3",
-    "pg": "^8.20.0",
+    "mysql2": "^3.22.3",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@types/bcryptjs": "^3.0.0",
     "@types/node": "catalog:",
-    "@types/pg": "^8.20.0",
     "drizzle-kit": "^0.31.10",
     "tsx": "catalog:"
   }

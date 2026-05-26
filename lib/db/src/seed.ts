@@ -4,6 +4,7 @@ import {
   suppliersTable, eventsTable, messagesTable, siteSettingsTable, homepageSliderTable,
   usersTable
 } from "./schema";
+import { sql } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 async function seed() {
@@ -18,7 +19,7 @@ async function seed() {
     lastName: "Nyumba",
     userType: "admin",
     verified: true,
-  }).onConflictDoNothing();
+  }).onDuplicateKeyUpdate({ set: { id: sql`id` } });
   console.log("✓ Admin user seeded (admin@nyumba.co.ke / admin123)");
 
   // Articles
@@ -95,7 +96,7 @@ async function seed() {
       views: 5430,
       readTime: "5 min read",
     },
-  ]).onConflictDoNothing();
+  ]).onDuplicateKeyUpdate({ set: { id: sql`id` } });
   console.log("✓ Articles seeded");
 
   // Properties
@@ -214,7 +215,7 @@ async function seed() {
       featured: true,
       views: 178,
     },
-  ]).onConflictDoNothing();
+  ]).onDuplicateKeyUpdate({ set: { id: sql`id` } });
   console.log("✓ Properties seeded");
 
   // Professionals
@@ -296,7 +297,7 @@ async function seed() {
       reviews: 52,
       projects: 43,
     },
-  ]).onConflictDoNothing();
+  ]).onDuplicateKeyUpdate({ set: { id: sql`id` } });
   console.log("✓ Professionals seeded");
 
   // Contractors
@@ -364,7 +365,7 @@ async function seed() {
       rating: "4.7",
       reviews: 87,
     },
-  ]).onConflictDoNothing();
+  ]).onDuplicateKeyUpdate({ set: { id: sql`id` } });
   console.log("✓ Contractors seeded");
 
   // Suppliers
@@ -429,7 +430,7 @@ async function seed() {
       rating: "4.9",
       reviews: 321,
     },
-  ]).onConflictDoNothing();
+  ]).onDuplicateKeyUpdate({ set: { id: sql`id` } });
   console.log("✓ Suppliers seeded");
 
   // Events
@@ -489,7 +490,7 @@ async function seed() {
       status: "upcoming",
       published: true,
     },
-  ]).onConflictDoNothing();
+  ]).onDuplicateKeyUpdate({ set: { id: sql`id` } });
   console.log("✓ Events seeded");
 
   // Messages
@@ -497,7 +498,7 @@ async function seed() {
     { name: "Mary Njeri", email: "mary@example.com", subject: "Property Inquiry - Karen Villa", message: "I am very interested in the villa listing in Karen. Could you please arrange a viewing for this Saturday? I am pre-approved for financing.", readStatus: false },
     { name: "James Ochieng", email: "james@example.com", subject: "Partnership Opportunity", message: "We would like to discuss a potential partnership for our upcoming commercial development in Nairobi. Please let us know the best time to connect.", readStatus: true },
     { name: "Patricia Waweru", email: "patricia@example.com", subject: "Professional Listing Enquiry", message: "I am a registered architect interested in listing my services on your platform. What are the requirements and fees?", readStatus: false },
-  ]).onConflictDoNothing();
+  ]).onDuplicateKeyUpdate({ set: { id: sql`id` } });
   console.log("✓ Messages seeded");
 
   // Site Settings
@@ -511,14 +512,14 @@ async function seed() {
     { settingKey: "twitter_url", settingValue: "https://twitter.com/nyumba_mag" },
     { settingKey: "linkedin_url", settingValue: "https://linkedin.com/company/nyumba" },
     { settingKey: "instagram_url", settingValue: "https://instagram.com/nyumba_magazine" },
-  ]).onConflictDoNothing();
+  ]).onDuplicateKeyUpdate({ set: { id: sql`id` } });
   console.log("✓ Site settings seeded");
 
   // Slider
   await db.insert(homepageSliderTable).values([
     { title: "Construction Materials Catalog 2025", description: "Complete guide to premium building materials", fileType: "pdf", filePath: "/catalogs/materials-2025.pdf", imagePath: "https://images.pexels.com/photos/1216589/pexels-photo-1216589.jpeg?auto=compress&cs=tinysrgb&w=800", active: true, sortOrder: 1 },
     { title: "Modern Architecture Trends", description: "Latest architectural trends and innovations in Kenya", fileType: "image", filePath: "https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=800", imagePath: "https://images.pexels.com/photos/323780/pexels-photo-323780.jpeg?auto=compress&cs=tinysrgb&w=800", active: true, sortOrder: 2 },
-  ]).onConflictDoNothing();
+  ]).onDuplicateKeyUpdate({ set: { id: sql`id` } });
   console.log("✓ Slider items seeded");
 
   console.log("✅ Database seeding complete!");

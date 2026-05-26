@@ -11,63 +11,33 @@ const router: IRouter = Router();
 router.post("/auth/signup", async (req, res) => {
   try {
     const {
-      email,
-      password,
-      firstName,
-      lastName,
-      phone,
-      location,
-      userType: rawUserType = "user",
-      profession,
-      company,
-      description,
-      website,
-      licenseNumber,
+      email, password, firstName, lastName, phone, location,
+      userType: rawUserType = "user", profession, company, description, website, licenseNumber,
     } = req.body;
 
-    // Allowlist: self-signup may never grant admin. Only trusted roles allowed.
     const ALLOWED_SIGNUP_TYPES = ["user", "professional", "business"] as const;
     const userType = ALLOWED_SIGNUP_TYPES.includes(rawUserType as any) ? rawUserType as typeof ALLOWED_SIGNUP_TYPES[number] : "user";
 
     const existing = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
-    if (existing.length > 0) {
-      return res.status(400).json({ message: "User already exists" });
-    }
+    if (existing.length > 0) return res.status(400).json({ message: "User already exists" });
 
     const passwordHash = await bcrypt.hash(password, 10);
 
-    const [user] = await db.insert(usersTable).values({
-      email,
-      passwordHash,
-      firstName,
-      lastName,
-      phone,
-      location,
-      userType,
-      profession,
-      company,
-      description,
-      website,
-      licenseNumber,
-      verified: false,
-    }).returning();
+    const [{ id }] = await db.insert(usersTable).values({
+      email, passwordHash, firstName, lastName, phone, location,
+      userType, profession, company, description, website, licenseNumber, verified: false,
+    }).$returningId();
+
+    const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id)).limit(1);
 
     const token = jwt.sign(
       { userId: user.id, email: user.email, userType: user.userType },
-      JWT_SECRET,
-      { expiresIn: "24h" }
+      JWT_SECRET, { expiresIn: "24h" }
     );
 
     res.status(201).json({
       token,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        userType: user.userType,
-        verified: user.verified,
-      },
+      user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, userType: user.userType, verified: user.verified },
     });
   } catch (err) {
     req.log.error(err);
@@ -78,33 +48,20 @@ router.post("/auth/signup", async (req, res) => {
 router.post("/auth/signin", async (req, res) => {
   try {
     const { email, password } = req.body;
-
     const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email)).limit(1);
-    if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    if (!user) return res.status(401).json({ message: "Invalid credentials" });
 
     const valid = await bcrypt.compare(password, user.passwordHash);
-    if (!valid) {
-      return res.status(401).json({ message: "Invalid credentials" });
-    }
+    if (!valid) return res.status(401).json({ message: "Invalid credentials" });
 
     const token = jwt.sign(
       { userId: user.id, email: user.email, userType: user.userType },
-      JWT_SECRET,
-      { expiresIn: "24h" }
+      JWT_SECRET, { expiresIn: "24h" }
     );
 
     res.json({
       token,
-      user: {
-        id: user.id,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        userType: user.userType,
-        verified: user.verified,
-      },
+      user: { id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, userType: user.userType, verified: user.verified },
     });
   } catch (err) {
     req.log.error(err);
@@ -115,28 +72,13 @@ router.post("/auth/signin", async (req, res) => {
 router.get("/auth/verify", async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "No token provided" });
-    }
-
+    if (!authHeader?.startsWith("Bearer ")) return res.status(401).json({ message: "No token provided" });
     const token = authHeader.replace("Bearer ", "");
-    // @ts-ignore
     const decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
-
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, decoded.userId)).limit(1);
-    if (!user) {
-      return res.status(401).json({ message: "User not found" });
-    }
-
-    res.json({
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      userType: user.userType,
-      verified: user.verified,
-    });
-  } catch (err) {
+    if (!user) return res.status(401).json({ message: "User not found" });
+    res.json({ id: user.id, email: user.email, firstName: user.firstName, lastName: user.lastName, userType: user.userType, verified: user.verified });
+  } catch {
     res.status(401).json({ message: "Invalid token" });
   }
 });
@@ -144,24 +86,14 @@ router.get("/auth/verify", async (req, res) => {
 router.post("/auth/change-password", async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      return res.status(401).json({ error: "Not authenticated" });
-    }
-    const token = authHeader.replace("Bearer ", "");
+    if (!authHeader?.startsWith("Bearer ")) return res.status(401).json({ error: "Not authenticated" });
     let decoded: any;
-    try {
-      decoded = jwt.verify(token, JWT_SECRET) as { userId: number };
-    } catch {
-      return res.status(401).json({ error: "Invalid token" });
-    }
+    try { decoded = jwt.verify(authHeader.replace("Bearer ", ""), JWT_SECRET) as { userId: number }; }
+    catch { return res.status(401).json({ error: "Invalid token" }); }
 
     const { currentPassword, newPassword } = req.body;
-    if (!currentPassword || !newPassword) {
-      return res.status(400).json({ error: "currentPassword and newPassword are required" });
-    }
-    if (newPassword.length < 8) {
-      return res.status(400).json({ error: "New password must be at least 8 characters" });
-    }
+    if (!currentPassword || !newPassword) return res.status(400).json({ error: "currentPassword and newPassword are required" });
+    if (newPassword.length < 8) return res.status(400).json({ error: "New password must be at least 8 characters" });
 
     const [user] = await db.select().from(usersTable).where(eq(usersTable.id, decoded.userId)).limit(1);
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -169,9 +101,7 @@ router.post("/auth/change-password", async (req, res) => {
     const valid = await bcrypt.compare(currentPassword, user.passwordHash);
     if (!valid) return res.status(400).json({ error: "Current password is incorrect" });
 
-    const newHash = await bcrypt.hash(newPassword, 10);
-    await db.update(usersTable).set({ passwordHash: newHash }).where(eq(usersTable.id, user.id));
-
+    await db.update(usersTable).set({ passwordHash: await bcrypt.hash(newPassword, 10) }).where(eq(usersTable.id, user.id));
     res.json({ success: true, message: "Password changed successfully" });
   } catch (err) {
     req.log.error(err);

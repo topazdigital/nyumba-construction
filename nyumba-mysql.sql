@@ -413,6 +413,30 @@ CREATE TABLE `comments` (
   KEY `idx_comments_approved` (`approved`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+-- ----------------------
+-- Table: advertisements
+-- ----------------------
+DROP TABLE IF EXISTS `advertisements`;
+CREATE TABLE `advertisements` (
+  `id` INT(11) NOT NULL AUTO_INCREMENT,
+  `label` VARCHAR(50) NOT NULL DEFAULT 'SPONSORED',
+  `headline` VARCHAR(255) NOT NULL,
+  `sub` TEXT DEFAULT NULL,
+  `cta` VARCHAR(100) NOT NULL DEFAULT 'Learn More',
+  `cta_link` VARCHAR(500) NOT NULL DEFAULT '#',
+  `phone` VARCHAR(30) DEFAULT NULL,
+  `image_url` VARCHAR(500) DEFAULT NULL,
+  `bg` VARCHAR(100) DEFAULT 'from-gray-800 to-gray-900',
+  `accent` VARCHAR(100) DEFAULT 'bg-yellow-400 text-gray-900',
+  `active` TINYINT(1) DEFAULT 1,
+  `sort_order` INT(11) DEFAULT 0,
+  `clicks` INT(11) DEFAULT 0,
+  `created_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_advertisements_active` (`active`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- ============================================================

@@ -1,9 +1,9 @@
-import { pgTable, serial, varchar, text, boolean, integer, decimal, json, timestamp, date } from "drizzle-orm/pg-core";
+import { mysqlTable, int, varchar, text, boolean, decimal, json, timestamp } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const eventsTable = pgTable("events", {
-  id: serial("id").primaryKey(),
+export const eventsTable = mysqlTable("events", {
+  id: int("id").autoincrement().primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   description: text("description").notNull(),
   category: varchar("category", { length: 100 }).notNull(),
@@ -15,7 +15,7 @@ export const eventsTable = pgTable("events", {
   price: decimal("price", { precision: 10, scale: 2 }).default("0"),
   image: varchar("image", { length: 500 }),
   organizer: varchar("organizer", { length: 255 }),
-  attendees: integer("attendees").default(0),
+  attendees: int("attendees").default(0),
   speakers: json("speakers").$type<string[]>().default([]),
   featured: boolean("featured").default(false),
   status: varchar("status", { length: 20 }).default("upcoming"),

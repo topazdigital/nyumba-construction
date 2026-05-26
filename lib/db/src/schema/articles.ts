@@ -1,9 +1,9 @@
-import { pgTable, serial, varchar, text, boolean, integer, timestamp } from "drizzle-orm/pg-core";
+import { mysqlTable, int, varchar, text, boolean, timestamp } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const articlesTable = pgTable("articles", {
-  id: serial("id").primaryKey(),
+export const articlesTable = mysqlTable("articles", {
+  id: int("id").autoincrement().primaryKey(),
   title: varchar("title", { length: 255 }).notNull(),
   content: text("content").notNull(),
   excerpt: text("excerpt").notNull(),
@@ -12,7 +12,7 @@ export const articlesTable = pgTable("articles", {
   author: varchar("author", { length: 100 }).notNull(),
   published: boolean("published").default(false),
   featured: boolean("featured").default(false),
-  views: integer("views").default(0),
+  views: int("views").default(0),
   readTime: varchar("read_time", { length: 20 }),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

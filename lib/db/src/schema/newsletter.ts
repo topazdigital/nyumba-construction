@@ -1,9 +1,9 @@
-import { pgTable, serial, varchar, boolean, timestamp } from "drizzle-orm/pg-core";
+import { mysqlTable, int, varchar, boolean, timestamp } from "drizzle-orm/mysql-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
 
-export const newsletterSubscribersTable = pgTable("newsletter_subscribers", {
-  id: serial("id").primaryKey(),
+export const newsletterSubscribersTable = mysqlTable("newsletter_subscribers", {
+  id: int("id").autoincrement().primaryKey(),
   email: varchar("email", { length: 255 }).unique().notNull(),
   name: varchar("name", { length: 100 }),
   active: boolean("active").default(true),
