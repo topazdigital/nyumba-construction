@@ -8,3 +8,5 @@ export * from "./events";
 export * from "./messages";
 export * from "./settings";
 export * from "./comments";
+export * from "./newsletter";
+export * from "./advertisements";

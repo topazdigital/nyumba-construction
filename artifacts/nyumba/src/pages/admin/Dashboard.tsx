@@ -2,7 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   FileText, Building2, Users, TrendingUp, Plus, Eye, Edit, Trash2, Settings,
-  BarChart3, Image, Mail, Phone, Globe, Save, Clock, MessageSquare, Search, X, Package, Wrench, Key
+  BarChart3, Image, Mail, Phone, Globe, Save, Clock, MessageSquare, Search, X, Package, Wrench, Key,
+  Megaphone, Rss, Download, ToggleLeft, ToggleRight, CheckCircle, XCircle
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -13,7 +14,7 @@ const authHdrs = () => ({
   'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
 });
 
-type Tab = 'overview' | 'articles' | 'properties' | 'professionals' | 'contractors' | 'suppliers' | 'events' | 'messages' | 'comments' | 'slider' | 'settings';
+type Tab = 'overview' | 'articles' | 'properties' | 'professionals' | 'contractors' | 'suppliers' | 'events' | 'messages' | 'comments' | 'slider' | 'newsletter' | 'advertisements' | 'settings';
 
 const Modal: React.FC<{ title: string; onClose: () => void; children: React.ReactNode }> = ({ title, onClose, children }) => (
   <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-start justify-center p-4 overflow-y-auto">
@@ -47,6 +48,9 @@ const AdminDashboard: React.FC = () => {
   const [messages, setMessages] = useState<any[]>([]);
   const [comments, setComments] = useState<any[]>([]);
   const [sliderItems, setSliderItems] = useState<any[]>([]);
+  const [newsletters, setNewsletters] = useState<any[]>([]);
+  const [newsletterStats, setNewsletterStats] = useState({ total: 0, active: 0 });
+  const [ads, setAds] = useState<any[]>([]);
   const [stats, setStats] = useState({ articles: 0, properties: 0, professionals: 0, users: 0 });
   const [siteSettings, setSiteSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -81,6 +85,9 @@ const AdminDashboard: React.FC = () => {
         fetch(`${API}/admin/stats`, { headers: authHdrs() }).then(r => r.json()),
         fetch(`${API}/settings`).then(r => r.json()),
         fetch(`${API}/comments?articleId=0`, { headers: authHdrs() }).then(r => r.json()).catch(() => []),
+        fetch(`${API}/newsletter/subscribers`, { headers: authHdrs() }).then(r => r.json()).catch(() => []),
+        fetch(`${API}/newsletter/stats`, { headers: authHdrs() }).then(r => r.json()).catch(() => ({})),
+        fetch(`${API}/advertisements/all`, { headers: authHdrs() }).then(r => r.json()).catch(() => []),
       ]);
       const get = (i: number) => results[i].status === 'fulfilled' ? (results[i] as any).value : [];
       setArticles(Array.isArray(get(0)) ? get(0) : []);
@@ -94,6 +101,9 @@ const AdminDashboard: React.FC = () => {
       setStats(get(8) || {});
       setSiteSettings(get(9) || {});
       setComments(Array.isArray(get(10)) ? get(10) : []);
+      setNewsletters(Array.isArray(get(11)) ? get(11) : []);
+      setNewsletterStats(get(12)?.total !== undefined ? get(12) : { total: 0, active: 0 });
+      setAds(Array.isArray(get(13)) ? get(13) : []);
     } catch (e) { console.error(e); }
   }, []);
 
@@ -113,6 +123,7 @@ const AdminDashboard: React.FC = () => {
     supplier: { companyName: '', contactPerson: '', categories: [], products: [], description: '', location: 'Nairobi, Kenya', website: '', establishedYear: '', employees: '', deliveryRadius: '', minOrderAmount: '', paymentTerms: '30 days', image: '', contactPhone: '', contactEmail: '', verified: false, published: false },
     event: { title: '', description: '', category: 'Conference', eventDate: '', eventTime: '', endDate: '', location: '', venue: '', price: '0', image: '', organizer: '', attendees: 0, featured: false, status: 'upcoming', website: '', published: false },
     slider: { title: '', description: '', fileType: 'image', filePath: '', imagePath: '', active: true, sortOrder: 0 },
+    advertisement: { label: 'SPONSORED', headline: '', sub: '', cta: 'Learn More', ctaLink: '', phone: '', imageUrl: '', bg: 'from-gray-800 to-gray-900', accent: 'bg-yellow-400 text-gray-900', active: true, sortOrder: 0 },
   }[type] || {});
 
   const handleSave = async (endpoint: string, id?: number) => {
@@ -186,6 +197,8 @@ const AdminDashboard: React.FC = () => {
     { id: 'messages', name: `Messages${messages.filter(m => !m.readStatus).length > 0 ? ` (${messages.filter(m => !m.readStatus).length})` : ''}`, icon: MessageSquare },
     { id: 'comments', name: `Comments${comments.filter(c => !c.approved).length > 0 ? ` (${comments.filter(c => !c.approved).length})` : ''}`, icon: MessageSquare },
     { id: 'slider', name: 'Slider', icon: Image },
+    { id: 'newsletter', name: `Newsletter${newsletterStats.total > 0 ? ` (${newsletterStats.active})` : ''}`, icon: Rss },
+    { id: 'advertisements', name: 'Ads', icon: Megaphone },
     { id: 'settings', name: 'Settings', icon: Settings },
   ];
 
@@ -468,6 +481,47 @@ const AdminDashboard: React.FC = () => {
             <Input label="Sort Order (lower = shown first)" fkey="sortOrder" type="number" />
             <Checkbox label="Active (visible on homepage)" fkey="active" />
             <SaveBtn endpoint="slider" color="blue" label="Save Slider Item" />
+          </div>
+        </Modal>
+      )}
+
+      {/* ── Advertisement Modal ── */}
+      {modal?.type === 'advertisement' && (
+        <Modal title={modal.data ? 'Edit Advertisement' : 'New Advertisement'} onClose={closeModal}>
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Label</label>
+                <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={form.label ?? 'SPONSORED'} onChange={fi('label')}>
+                  {['SPONSORED','FEATURED','ADVERTORIAL','PROMOTED','PARTNER'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
+              <Input label="Sort Order" fkey="sortOrder" type="number" />
+            </div>
+            <Input label="Headline *" fkey="headline" />
+            <Textarea label="Sub-text (short description)" fkey="sub" rows={2} />
+            <div className="grid grid-cols-2 gap-3">
+              <Input label="CTA Button Text" fkey="cta" />
+              <Input label="CTA Link (URL or /path)" fkey="ctaLink" />
+            </div>
+            <Input label="Phone Number (optional)" fkey="phone" />
+            <Input label="Image URL" fkey="imageUrl" />
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Background Gradient (Tailwind)</label>
+                <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={form.bg ?? 'from-gray-800 to-gray-900'} onChange={fi('bg')}>
+                  {['from-gray-800 to-gray-900','from-blue-800 to-blue-900','from-slate-700 to-slate-800','from-indigo-800 to-indigo-900','from-green-800 to-green-900','from-orange-700 to-orange-800','from-red-800 to-red-900'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-700 mb-1">Label Colour (Tailwind)</label>
+                <select className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" value={form.accent ?? 'bg-yellow-400 text-gray-900'} onChange={fi('accent')}>
+                  {['bg-yellow-400 text-gray-900','bg-orange-500 text-white','bg-green-500 text-white','bg-pink-500 text-white','bg-blue-500 text-white','bg-red-500 text-white','bg-white text-gray-900'].map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              </div>
+            </div>
+            <Checkbox label="Active (visible in ad banners)" fkey="active" />
+            <SaveBtn endpoint="advertisements" color="indigo" label="Save Advertisement" />
           </div>
         </Modal>
       )}
@@ -972,6 +1026,123 @@ const AdminDashboard: React.FC = () => {
                 </div>
               ))}
               {sliderItems.length === 0 && <p className="text-sm text-gray-400 col-span-3 py-8 text-center">No slider items yet. Click "Add Item" to get started.</p>}
+            </div>
+          </div>
+        )}
+
+        {/* ── NEWSLETTER ── */}
+        {activeTab === 'newsletter' && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {[
+                { label: 'Total Subscribers', value: newsletterStats.total, color: 'bg-blue-500' },
+                { label: 'Active Subscribers', value: newsletterStats.active, color: 'bg-green-500' },
+                { label: 'Unsubscribed', value: newsletterStats.total - newsletterStats.active, color: 'bg-gray-400' },
+              ].map(s => (
+                <div key={s.label} className="bg-white rounded-xl shadow-sm p-5 flex items-center gap-4">
+                  <div className={`${s.color} p-3 rounded-xl`}><Rss className="h-5 w-5 text-white" /></div>
+                  <div><p className="text-xs text-gray-500">{s.label}</p><p className="text-2xl font-bold text-gray-900">{s.value}</p></div>
+                </div>
+              ))}
+            </div>
+
+            <div className="bg-white rounded-xl shadow-sm">
+              <div className="flex items-center justify-between p-4 border-b">
+                <div>
+                  <h2 className="text-sm font-bold text-gray-900">Subscriber List</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">All emails collected via the newsletter signup form</p>
+                </div>
+                <button
+                  onClick={() => {
+                    const csv = ['Email,Name,Source,Status,Date Joined', ...newsletters.map(n => `${n.email},${n.name || ''},${n.source},${n.active ? 'Active' : 'Unsubscribed'},${n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-GB') : ''}`)].join('\n');
+                    const a = document.createElement('a'); a.href = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csv); a.download = 'newsletter-subscribers.csv'; a.click();
+                  }}
+                  className="flex items-center gap-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+                >
+                  <Download className="h-4 w-4" />Export CSV
+                </button>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="min-w-full divide-y divide-gray-200">
+                  <thead className="bg-gray-50">
+                    <tr>{['Email','Name','Source','Status','Joined','Actions'].map(h => <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">{h}</th>)}</tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {newsletters.map(n => (
+                      <tr key={n.id} className="hover:bg-gray-50">
+                        <td className="px-4 py-3 text-sm font-medium text-gray-900">{n.email}</td>
+                        <td className="px-4 py-3 text-xs text-gray-500">{n.name || '—'}</td>
+                        <td className="px-4 py-3 text-xs text-gray-500 capitalize">{n.source || 'website'}</td>
+                        <td className="px-4 py-3">
+                          <button onClick={async () => { await fetch(`${API}/newsletter/subscribers/${n.id}/toggle`, { method: 'PUT', headers: authHdrs() }); fetchAll(); }}>
+                            {n.active ? <span className="flex items-center gap-1 text-green-600 text-xs font-medium"><CheckCircle className="h-3.5 w-3.5" />Active</span> : <span className="flex items-center gap-1 text-gray-400 text-xs font-medium"><XCircle className="h-3.5 w-3.5" />Inactive</span>}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3 text-xs text-gray-500 whitespace-nowrap">{n.createdAt ? new Date(n.createdAt).toLocaleDateString('en-GB') : ''}</td>
+                        <td className="px-4 py-3">
+                          <button onClick={async () => { if (!confirm('Remove subscriber?')) return; await fetch(`${API}/newsletter/subscribers/${n.id}`, { method: 'DELETE', headers: authHdrs() }); fetchAll(); showToast('Subscriber removed'); }} className="text-red-500 hover:text-red-700"><Trash2 className="h-4 w-4" /></button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {newsletters.length === 0 && <div className="py-16 text-center text-gray-400 text-sm">No subscribers yet. They'll appear here once visitors sign up via the newsletter form.</div>}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── ADVERTISEMENTS ── */}
+        {activeTab === 'advertisements' && (
+          <div className="space-y-4">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900">Advertisement Banners</h2>
+                <p className="text-xs text-gray-500 mt-0.5">Manage the rotating ad banners shown in the sidebar across the site</p>
+              </div>
+              <button onClick={() => openModal('advertisement')} className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors">
+                <Plus className="h-4 w-4" />New Ad
+              </button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {ads.map(ad => (
+                <div key={ad.id} className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-100">
+                  {ad.imageUrl && (
+                    <div className="relative h-32 overflow-hidden">
+                      <img src={ad.imageUrl} alt={ad.headline} className="w-full h-full object-cover" onError={e => { (e.target as any).style.display = 'none'; }} />
+                      <div className="absolute inset-0 bg-black/30 flex items-end p-2">
+                        <span className={`${ad.accent || 'bg-yellow-400 text-gray-900'} px-2 py-0.5 rounded text-[10px] font-bold`}>{ad.label}</span>
+                      </div>
+                    </div>
+                  )}
+                  <div className="p-4">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="min-w-0 flex-1">
+                        <h3 className="font-semibold text-gray-900 text-sm truncate">{ad.headline}</h3>
+                        {ad.sub && <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{ad.sub}</p>}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs text-gray-400 mb-3">
+                      <span className="flex items-center gap-1"><Eye className="h-3 w-3" />{(ad.clicks || 0)} clicks</span>
+                      {ad.phone && <span className="flex items-center gap-1"><Phone className="h-3 w-3" />{ad.phone}</span>}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => handleToggle('advertisements', ad.id, 'active', ad.active)}
+                        className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-lg font-semibold transition-colors ${ad.active ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`}>
+                        {ad.active ? <><ToggleRight className="h-3.5 w-3.5" />Active</> : <><ToggleLeft className="h-3.5 w-3.5" />Hidden</>}
+                      </button>
+                      <button onClick={() => openModal('advertisement', ad)} className="text-blue-500 hover:text-blue-700 ml-auto"><Edit className="h-4 w-4" /></button>
+                      <button onClick={() => handleDelete('advertisements', ad.id)} className="text-red-500 hover:text-red-700"><Trash2 className="h-4 w-4" /></button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {ads.length === 0 && (
+                <div className="col-span-3 py-16 text-center text-gray-400">
+                  <Megaphone className="h-12 w-12 mx-auto mb-3 opacity-20" />
+                  <p className="text-sm">No ads yet. Click "New Ad" to create your first advertisement banner.</p>
+                </div>
+              )}
             </div>
           </div>
         )}

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ArrowRight, TrendingUp, Users, Building, Clock, Calendar, User, Eye } from 'lucide-react';
 import { API_BASE } from '../../lib/api';
 import AdBanner from './AdBanner';
+import NewsletterWidget from './NewsletterWidget';
 
 const MagazineHero: React.FC = () => {
   const [articles, setArticles] = useState<any[]>([]);
@@ -167,20 +168,7 @@ const MagazineHero: React.FC = () => {
               <AdBanner />
 
               {/* Newsletter */}
-              <div className="bg-gradient-to-br from-orange-600 to-orange-700 rounded-xl shadow-lg p-5 text-white">
-                <h3 className="text-sm font-bold mb-1">Stay Informed</h3>
-                <p className="text-orange-100 text-xs mb-3">Get the latest construction industry insights delivered to your inbox</p>
-                <div className="flex gap-2">
-                  <input
-                    type="email"
-                    placeholder="Your email address"
-                    className="flex-1 min-w-0 px-3 py-2 rounded-lg text-xs text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300"
-                  />
-                  <button className="flex-shrink-0 bg-white text-orange-600 py-2 px-3 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-colors">
-                    Subscribe
-                  </button>
-                </div>
-              </div>
+              <NewsletterWidget bg="orange" inline />
             </div>
           </div>
         )}

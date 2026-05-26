@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { Search, Calendar, User, Clock, ArrowRight, TrendingUp, Eye, Filter } from 'lucide-react';
 import { API_BASE } from '../lib/api';
 import AdBanner from '../components/Home/AdBanner';
+import NewsletterWidget from '../components/Home/NewsletterWidget';
 
 const News: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
@@ -194,15 +195,7 @@ const News: React.FC = () => {
 
             <AdBanner />
 
-            <div className="bg-gradient-to-br from-blue-700 to-blue-800 rounded-xl shadow-md p-4 text-white">
-              <h3 className="text-sm font-bold mb-1.5">Stay Updated</h3>
-              <p className="text-blue-100 text-xs mb-3">Get the latest industry news delivered to your inbox</p>
-              <input type="email" placeholder="Enter your email"
-                className="w-full px-3 py-2 rounded-lg text-xs text-gray-900 placeholder-gray-500 focus:outline-none mb-2" />
-              <button className="w-full bg-white text-blue-700 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-colors">
-                Subscribe
-              </button>
-            </div>
+            <NewsletterWidget bg="blue" />
 
             <div className="bg-white rounded-xl shadow-md p-4">
               <h3 className="text-sm font-bold text-gray-900 mb-3">Browse Categories</h3>

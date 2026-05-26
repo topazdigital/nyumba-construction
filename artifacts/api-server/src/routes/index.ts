@@ -11,6 +11,8 @@ import messagesRouter from "./messages";
 import settingsRouter from "./settings";
 import commentsRouter from "./comments";
 import seedRouter from "./seed";
+import newsletterRouter from "./newsletter";
+import advertisementsRouter from "./advertisements";
 
 const router: IRouter = Router();
 
@@ -26,5 +28,7 @@ router.use(messagesRouter);
 router.use(settingsRouter);
 router.use(commentsRouter);
 router.use(seedRouter);
+router.use(newsletterRouter);
+router.use(advertisementsRouter);
 
 export default router;

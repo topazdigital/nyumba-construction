@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, ExternalLink, Download } from 'lucide-react';
 import { API_BASE } from '../../lib/api';
 import AdBanner from './AdBanner';
+import NewsletterWidget from './NewsletterWidget';
 
 const Sidebar: React.FC = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -130,18 +131,7 @@ const Sidebar: React.FC = () => {
       <AdBanner />
 
       {/* Newsletter */}
-      <div className="bg-gradient-to-br from-orange-600 to-orange-700 rounded-xl shadow-md p-4 text-white">
-        <h3 className="text-sm font-bold mb-1">Stay Updated</h3>
-        <p className="text-orange-100 text-xs mb-3">Get the latest industry news and insights</p>
-        <input
-          type="email"
-          placeholder="Enter your email"
-          className="w-full px-3 py-2 rounded-lg text-xs text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-orange-300 mb-2"
-        />
-        <button className="w-full bg-white text-orange-600 py-2 px-3 rounded-lg text-xs font-semibold hover:bg-gray-50 transition-colors">
-          Subscribe
-        </button>
-      </div>
+      <NewsletterWidget bg="orange" />
     </div>
   );
 };
