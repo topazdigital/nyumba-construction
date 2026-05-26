@@ -5,12 +5,23 @@ import {
   suppliersTable, eventsTable, siteSettingsTable, homepageSliderTable, usersTable,
 } from "@workspace/db/schema";
 import bcrypt from "bcryptjs";
-import { requireAdmin } from "../middleware/auth";
+import { count } from "drizzle-orm";
 
 const router = Router();
 
-router.post("/admin/seed", requireAdmin, async (_req, res) => {
+// Bootstrap-safe: only runs when DB is empty (no users exist yet)
+// Protected by SEED_KEY env var as a backup
+router.post("/admin/seed", async (req, res) => {
   try {
+    // Safety: only allow seeding if DB is empty OR correct key provided
+    const providedKey = req.headers['x-seed-key'] || req.body?.seedKey;
+    const expectedKey = process.env.SEED_KEY;
+    const keyMatches = expectedKey && providedKey === expectedKey;
+
+    const [{ value: userCount }] = await db.select({ value: count() }).from(usersTable);
+    if (userCount > 0 && !keyMatches) {
+      return res.status(403).json({ error: "Database already seeded. Provide SEED_KEY to force re-seed." });
+    }
     const adminPasswordHash = await bcrypt.hash("admin123", 10);
     await db.insert(usersTable).values({
       email: "admin@nyumba.co.ke", passwordHash: adminPasswordHash,
